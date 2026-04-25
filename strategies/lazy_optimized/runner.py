@@ -10,7 +10,7 @@ from ..utils import (
 from prompts import LAZY_SYSTEM_MESSAGE, get_lazy_user_message
 
 async def run_lazy_optimized(word, salt=None, timeout=120):
-    """Strategy: Lazy Optimized - Generates only 3 sentences (A1, A2, B1) with Streaming TTFT."""
+    """Estrategia: Optimización Perezosa - Genera solo 3 oraciones (A1, A2, B1) con TTFT por streaming."""
     system_instruction = LAZY_SYSTEM_MESSAGE
     if salt:
         system_instruction += f"\n\nBenchmark Salt: {salt}"

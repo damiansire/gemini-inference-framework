@@ -11,7 +11,7 @@ from ..utils import (
 from prompts import SYSTEM_MESSAGE, get_user_message
 
 async def run_monolithic(word, salt=None, timeout=120):
-    """Strategy 1: Original monolithic prompt, no schema, with streaming TTFT."""
+    """Estrategia 1: Prompt monolítico original, sin schema, con TTFT por streaming."""
     system_instruction = SYSTEM_MESSAGE
     if salt:
         system_instruction += f"\n\nBenchmark Salt: {salt}"
@@ -57,7 +57,7 @@ async def run_monolithic(word, salt=None, timeout=120):
         }
 
 async def run_monolithic_schema(word, salt=None, timeout=120):
-    """Strategy 2: Monolithic with strict JSON schema."""
+    """Estrategia 2: Monolítica con schema JSON estricto."""
     full_schema = types.Schema(
         type="ARRAY",
         items=types.Schema(

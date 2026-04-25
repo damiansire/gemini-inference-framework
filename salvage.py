@@ -19,8 +19,8 @@ def salvage():
         "summaries": {}
     }
     
-    # regex to match each block:
-    # [1/120] Strategy Name | word='word' | iteration=X | salt=YYY
+    # regex para coincidir con cada bloque:
+    # [1/120] Nombre Estrategia | word='palabra' | iteration=X | salt=YYY
     #   VALID | dur=XX.XXs | ttft=XX.XXs | thought=XX,XXX | total=XX,XXX | api_success=True | output_valid=True
     
     block_pattern = re.compile(r"\[\d+/120\]\s+(.*?)\s+\|\s+word='([^']+)'\s+\|\s+iteration=(\d+)\s+\|\s+salt=([a-f0-9]+).*?(VALID|FAILED|TIMEOUT)\s+\|\s+dur=([0-9.]+)s\s+\|\s+ttft=([0-9.]+s|N/A)\s+\|\s+thought=([\d,]+)\s+\|\s+total=([\d,]+)\s+\|\s+api_success=(True|False)\s+\|\s+output_valid=(True|False)", re.DOTALL)
@@ -47,10 +47,10 @@ def salvage():
         tot = int(total_str.replace(",", ""))
         tho = int(thought_str.replace(",", ""))
         
-        # Heuristic for cost (since exact split isn't in log)
-        # Thinking tokens are billed as output. Assume ~800 standard output tokens.
+        # Heurística para el costo (ya que la división exacta no está en el log)
+        # Los tokens de pensamiento se facturan como salida. Se asumen ~800 tokens de salida estándar.
         est_out = tho + 800
-        if est_out > tot:
+        if est_out > tot:  # Respaldo seguro
             est_out = tot * 0.3 # Fallback safely
         est_in = tot - est_out
         
@@ -79,7 +79,7 @@ def salvage():
         if strat_key in strategy_results:
             strategy_results[strat_key].append(run_record)
             
-    # Import summarize_metrics now that it is fixed
+    # Importar summarize_metrics ahora que está corregido
     from compare_benchmarks import summarize_metrics, STRATEGIES
     
     for key in results_metadata["metadata"]["strategies"]:
@@ -95,7 +95,7 @@ def salvage():
         json.dump(results_metadata, handle, indent=2, ensure_ascii=False, default=str)
         
     _generate_benchmark_report(results_metadata)
-    print("SALVAGE SUCCESSFUL: Reports generated from log file.")
+    print("SALVAMENTO EXITOSO: Reportes generados desde el archivo de log.")
 
 if __name__ == "__main__":
     salvage()

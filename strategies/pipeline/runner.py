@@ -111,7 +111,7 @@ async def _run_stage(
 
 
 async def run_pipeline(word="hana", salt=None, timeout=120):
-    """Sequential multi-stage baseline without explicit thinking controls."""
+    """Línea base secuencial multi-etapa sin controles de pensamiento explícitos."""
     metrics = MetricsTracker()
     e2e_start = time.time()
 

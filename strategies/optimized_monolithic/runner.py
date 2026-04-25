@@ -10,7 +10,7 @@ from ..utils import (
 from prompts import get_user_message, OPTIMIZED_SYSTEM_MESSAGE
 
 async def run_optimized(word, salt=None, timeout=120):
-    """Strategy: Optimized System Prompt with Zero Temperature and Streaming TTFT."""
+    """Estrategia: Prompt de Sistema Optimizado con Temperatura Cero y TTFT por streaming."""
     system_instruction = OPTIMIZED_SYSTEM_MESSAGE
     if salt:
         system_instruction += f"\n\nBenchmark Salt: {salt}"

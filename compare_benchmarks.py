@@ -1,8 +1,8 @@
 """
-Gemini latency benchmark suite with output validation.
+Suite de benchmark de latencia de Gemini con validación de salida.
 
-The benchmark only counts runs as successful when the API call completes and
-the returned dictionary structure is usable for downstream consumers.
+El benchmark solo cuenta las ejecuciones como exitosas cuando la llamada API
+se completa y la estructura del diccionario retornado es utilizable para consumidores posteriores.
 """
 
 import argparse
@@ -36,7 +36,7 @@ RESULTS_DIR = os.path.join(ROOT_DIR, "benchmark_results")
 
 
 async def run_pipeline_strategy(word, salt=None, timeout=180):
-    """Sequential multi-stage baseline."""
+    """Línea base secuencial multi-etapa."""
     try:
         result, metrics = await run_pipeline_strategy_base(word, salt=salt, timeout=timeout)
         duration = metrics.get("e2e_duration", 0)
@@ -72,7 +72,7 @@ async def run_pipeline_strategy(word, salt=None, timeout=180):
 
 
 async def run_cascade_strategy(word, salt=None, timeout=180):
-    """Structured cascade with explicit thinking controls."""
+    """Cascada estructurada con controles de pensamiento explícitos."""
     try:
         result, metrics = await run_cascade_strategy_base(word, salt=salt, timeout=timeout)
         duration = metrics.get("e2e_duration", 0)
@@ -267,7 +267,7 @@ def _normalize_result(strategy_key, result):
 
 
 async def warmup():
-    """Warm the API to reduce first-request bias."""
+    """Calentar la API para reducir el sesgo de la primera solicitud."""
     client = _create_client()
     try:
         await asyncio.to_thread(
@@ -277,7 +277,7 @@ async def warmup():
         )
     except Exception as exc:
         print(
-            f"[{datetime.now().strftime('%H:%M:%S')}] Warmup failed ({exc}), continuing anyway..."
+            f"[{datetime.now().strftime('%H:%M:%S')}] Calentamiento falló ({exc}), continuando de todas formas..."
         )
 
 
@@ -335,26 +335,26 @@ def _generate_benchmark_report(data):
         rows.append(row)
 
     report = [
-        "# Gemini Latency Benchmark Report",
+        "# Reporte del Benchmark de Latencia de Gemini",
         "",
-        f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-        f"Words: {', '.join(data['metadata']['words'])}",
-        f"Iterations per strategy: {data['metadata']['iterations']}",
-        f"Timeout per call: {data['metadata']['timeout']}s",
-        f"Models benchmarked: {FLASH_MODEL}, {PRO_MODEL}",
+        f"Generado: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        f"Palabras: {', '.join(data['metadata']['words'])}",
+        f"Iteraciones por estrategia: {data['metadata']['iterations']}",
+        f"Timeout por llamada: {data['metadata']['timeout']}s",
+        f"Modelos evaluados: {FLASH_MODEL}, {PRO_MODEL}",
         "",
-        "## Executive Summary",
+        "## Resumen Ejecutivo",
         "",
         header,
         divider,
         *rows,
         "",
-        "## Quality Gate",
+        "## Control de Calidad",
         "",
-        "All leaderboard metrics above are calculated only from runs that completed and passed the output validator.",
-        "The validator checks JSON parseability, root shape, required keys, CEFR level coverage, and a headword policy that rejects obvious grammatical-form collisions.",
+        "Todas las métricas de la tabla anterior se calculan únicamente a partir de las ejecuciones que completaron y pasaron el validador de salida.",
+        "El validador verifica que el JSON sea parseable, la forma del nodo raíz, las claves requeridas, la cobertura de niveles CEFR y una política de lema que rechaza colisiones obvias con formas gramaticales.",
         "",
-        "## Strategy Notes",
+        "## Notas sobre las Estrategias",
         "",
     ]
 
@@ -386,7 +386,7 @@ def _generate_benchmark_report(data):
     report.extend(
         [
             "",
-            "## Failure Breakdown",
+            "## Desglose de Fallos",
             "",
         ]
     )
@@ -490,44 +490,44 @@ def _generate_article_draft(data):
 
 async def main():
     parser = argparse.ArgumentParser(
-        description="Gemini latency benchmark with output validation"
+        description="Benchmark de latencia de Gemini con validación de salida"
     )
-    parser.add_argument("--words", nargs="+", default=TEST_WORDS, help="Words to benchmark")
+    parser.add_argument("--words", nargs="+", default=TEST_WORDS, help="Palabras para el benchmark")
     parser.add_argument(
         "--iterations",
         type=int,
         default=10,
-        help="Iterations per strategy and word",
+        help="Iteraciones por estrategia y palabra",
     )
     parser.add_argument(
         "--timeout",
         type=int,
         default=180,
-        help="Timeout per API call in seconds",
+        help="Timeout por llamada API en segundos",
     )
     parser.add_argument(
         "--strategies",
         nargs="+",
         default=list(STRATEGIES.keys()),
         choices=list(STRATEGIES.keys()),
-        help="Subset of strategies to benchmark",
+        help="Subconjunto de estrategias para el benchmark",
     )
     parser.add_argument(
         "--output",
         default="benchmark_data.json",
-        help="Filename to write inside benchmark_results/",
+        help="Nombre de archivo a escribir dentro de benchmark_results/",
     )
     args = parser.parse_args()
 
     print("=" * 70)
-    print("  GEMINI LATENCY BENCHMARK SUITE")
-    print("  Latency, cost, and output validity")
+    print("  SUITE DE BENCHMARK DE LATENCIA GEMINI")
+    print("  Latencia, costo y validez de la salida")
     print("=" * 70)
-    print(f"  Words: {args.words}")
-    print(f"  Strategies: {args.strategies}")
-    print(f"  Iterations: {args.iterations}")
+    print(f"  Palabras: {args.words}")
+    print(f"  Estrategias: {args.strategies}")
+    print(f"  Iteraciones: {args.iterations}")
     print(f"  Timeout: {args.timeout}s")
-    print(f"  Total API calls: ~{len(args.words) * len(args.strategies) * args.iterations}")
+    print(f"  Total llamadas API: ~{len(args.words) * len(args.strategies) * args.iterations}")
     print("=" * 70)
 
     os.makedirs(RESULTS_DIR, exist_ok=True)
@@ -613,7 +613,7 @@ async def main():
         strategy_results[strategy_key].append(result)
 
     print(f"\n{'=' * 70}")
-    print("  AGGREGATED RESULTS")
+    print("  RESULTADOS AGREGADOS")
     print(f"{'=' * 70}")
 
     for strategy_key in args.strategies:
@@ -638,7 +638,7 @@ async def main():
     _generate_gde_submission(all_results)
     _generate_article_draft(all_results)
 
-    print(f"\nResults saved to: {output_path}")
+    print(f"\nResultados guardados en: {output_path}")
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ from ..utils import (
 from prompts import SYSTEM_MESSAGE, get_user_message
 
 async def run_pro_model(word, salt=None, timeout=180):
-    """Strategy 5: Pro model — testing the community claim with Streaming TTFT."""
+    """Estrategia 5: Modelo Pro — probando la afirmación de la comunidad con TTFT por streaming."""
     system_instruction = SYSTEM_MESSAGE
     if salt:
         system_instruction += f"\n\nBenchmark Salt: {salt}"

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Latency Benchmark — Dashboard</title>
-    <meta name="description" content="Empirical analysis of Gemini Flash reasoning explosion patterns and optimization strategies">
+    <title>Benchmark de Latencia Gemini — Panel de Control</title>
+    <meta name="description" content="Análisis empírico de los patrones de explosión de razonamiento de Gemini Flash y estrategias de optimización">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -12,60 +12,60 @@
     <link rel="stylesheet" href="index.css">
 </head>
 <body>
-    <!-- Hero Header -->
+    <!-- Encabezado Hero -->
     <header class="hero" id="hero">
         <div class="hero-bg"></div>
         <div class="hero-content">
-            <div class="hero-badge">GDE GenAI Circle — Empirical Research</div>
-            <h1>Gemini Flash<br><span class="gradient-text">Reasoning Explosion</span></h1>
+            <div class="hero-badge">GDE GenAI Circle — Investigación Empírica</div>
+            <h1>Gemini Flash<br><span class="gradient-text">Explosión de Razonamiento</span></h1>
             <p class="hero-subtitle">
-                Dashboard for generated benchmark snapshots that compare multiple
-                optimization strategies for structured Finnish dictionary generation
+                Panel de control para snapshots de benchmark generados que comparan múltiples
+                estrategias de optimización para la generación estructurada de diccionarios en finlandés
             </p>
             <div class="hero-stats" id="heroStats">
                 <div class="hero-stat">
                     <span class="hero-stat-value" id="statStrategies">—</span>
-                    <span class="hero-stat-label">Strategies</span>
+                    <span class="hero-stat-label">Estrategias</span>
                 </div>
                 <div class="hero-stat">
                     <span class="hero-stat-value" id="statWords">—</span>
-                    <span class="hero-stat-label">Words Tested</span>
+                    <span class="hero-stat-label">Palabras Probadas</span>
                 </div>
                 <div class="hero-stat">
                     <span class="hero-stat-value" id="statRuns">—</span>
-                    <span class="hero-stat-label">Total Runs</span>
+                    <span class="hero-stat-label">Ejecuciones Totales</span>
                 </div>
                 <div class="hero-stat">
                     <span class="hero-stat-value" id="statTimestamp">—</span>
-                    <span class="hero-stat-label">Last Run</span>
+                    <span class="hero-stat-label">Última Ejecución</span>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Claims Verification Section -->
+    <!-- Sección de Verificación de Afirmaciones -->
     <section class="section" id="claims">
         <div class="container">
             <h2 class="section-title">
                 <span class="section-icon">🔬</span>
-                Claims Verification
+                Verificación de Afirmaciones
             </h2>
-            <p class="section-subtitle">Empirically testing the assertions from the GDE discussion</p>
+            <p class="section-subtitle">Comprobando empíricamente las afirmaciones de la discusión del GDE</p>
 
             <div class="claims-grid" id="claimsGrid">
                 <div class="claim-card" id="claim1">
                     <div class="claim-header">
-                        <span class="claim-author">Reporter</span>
-                        <span class="claim-verdict" id="verdict1">PENDING</span>
+                        <span class="claim-author">Reportero</span>
+                        <span class="claim-verdict" id="verdict1">PENDIENTE</span>
                     </div>
-                    <p class="claim-text">"The model consumed 62,910 thought tokens to generate 1,069 output tokens"</p>
+                    <p class="claim-text">"El modelo consumió 62,910 tokens de pensamiento para generar 1,069 tokens de salida"</p>
                     <div class="claim-evidence" id="evidence1">
                         <div class="evidence-metric">
-                            <span class="evidence-label">Max Thought Tokens Observed</span>
+                            <span class="evidence-label">Máx Tokens de Pensamiento Observados</span>
                             <span class="evidence-value" id="maxThoughtObserved">—</span>
                         </div>
                         <div class="evidence-metric">
-                            <span class="evidence-label">Avg Thought Tokens (Monolithic)</span>
+                            <span class="evidence-label">Prom Tokens de Pensamiento (Monolítica)</span>
                             <span class="evidence-value" id="avgThoughtMono">—</span>
                         </div>
                     </div>
@@ -73,17 +73,17 @@
 
                 <div class="claim-card" id="claim2">
                     <div class="claim-header">
-                        <span class="claim-author">Member A</span>
-                        <span class="claim-verdict" id="verdict2">PENDING</span>
+                        <span class="claim-author">Miembro A</span>
+                        <span class="claim-verdict" id="verdict2">PENDIENTE</span>
                     </div>
-                    <p class="claim-text">"Flash won't be able to handle such complex prompt. Likely is going round and round in thoughts"</p>
+                    <p class="claim-text">"Flash no podrá manejar un prompt tan complejo. Probablemente está dando vueltas y vueltas en sus pensamientos"</p>
                     <div class="claim-evidence" id="evidence2">
                         <div class="evidence-metric">
-                            <span class="evidence-label">Flash Failure/Timeout Rate</span>
+                            <span class="evidence-label">Tasa de Fallos/Timeout de Flash</span>
                             <span class="evidence-value" id="flashFailRate">—</span>
                         </div>
                         <div class="evidence-metric">
-                            <span class="evidence-label">Thinking Budget Effectiveness</span>
+                            <span class="evidence-label">Efectividad del Presupuesto de Pensamiento</span>
                             <span class="evidence-value" id="budgetEffect">—</span>
                         </div>
                     </div>
@@ -91,17 +91,17 @@
 
                 <div class="claim-card" id="claim3">
                     <div class="claim-header">
-                        <span class="claim-author">Member B</span>
-                        <span class="claim-verdict" id="verdict3">PENDING</span>
+                        <span class="claim-author">Miembro B</span>
+                        <span class="claim-verdict" id="verdict3">PENDIENTE</span>
                     </div>
-                    <p class="claim-text">"Pro models tend not to get caught in these reasoning exhaustion traps... can actually be the same or cheaper"</p>
+                    <p class="claim-text">"Los modelos Pro tienden a no caer en estas trampas de agotamiento de razonamiento... de hecho pueden salir igual o más baratos"</p>
                     <div class="claim-evidence" id="evidence3">
                         <div class="evidence-metric">
-                            <span class="evidence-label">Pro Avg Cost vs Flash</span>
+                            <span class="evidence-label">Costo Prom de Pro vs Flash</span>
                             <span class="evidence-value" id="proCostComparison">—</span>
                         </div>
                         <div class="evidence-metric">
-                            <span class="evidence-label">Pro Failure Rate</span>
+                            <span class="evidence-label">Tasa de Fallos de Pro</span>
                             <span class="evidence-value" id="proFailRate">—</span>
                         </div>
                     </div>
@@ -110,43 +110,43 @@
         </div>
     </section>
 
-    <!-- Charts Section -->
+    <!-- Sección de Gráficos -->
     <section class="section section-dark" id="charts">
         <div class="container">
             <h2 class="section-title">
                 <span class="section-icon">📊</span>
-                Performance Analysis
+                Análisis de Rendimiento
             </h2>
-            <p class="section-subtitle">Visual comparison of all strategies</p>
+            <p class="section-subtitle">Comparación visual de todas las estrategias</p>
 
             <div class="charts-grid">
                 <div class="chart-card">
-                    <h3 class="chart-title">Latency Distribution</h3>
-                    <p class="chart-desc">Average, min, and max latency per strategy</p>
+                    <h3 class="chart-title">Distribución de Latencia</h3>
+                    <p class="chart-desc">Latencia promedio, mínima y máxima por estrategia</p>
                     <div class="chart-wrapper">
                         <canvas id="latencyChart"></canvas>
                     </div>
                 </div>
 
                 <div class="chart-card">
-                    <h3 class="chart-title">Thought Token Consumption</h3>
-                    <p class="chart-desc">Average and peak thought tokens — the core metric</p>
+                    <h3 class="chart-title">Consumo de Tokens de Pensamiento</h3>
+                    <p class="chart-desc">Tokens de pensamiento promedio y pico — la métrica central</p>
                     <div class="chart-wrapper">
                         <canvas id="thoughtChart"></canvas>
                     </div>
                 </div>
 
                 <div class="chart-card">
-                    <h3 class="chart-title">Cost Comparison</h3>
-                    <p class="chart-desc">Average cost per request in USD</p>
+                    <h3 class="chart-title">Comparación de Costos</h3>
+                    <p class="chart-desc">Costo promedio por solicitud en USD</p>
                     <div class="chart-wrapper">
                         <canvas id="costChart"></canvas>
                     </div>
                 </div>
 
                 <div class="chart-card">
-                    <h3 class="chart-title">Thought Tokens vs Latency</h3>
-                    <p class="chart-desc">Correlation between thinking depth and response time</p>
+                    <h3 class="chart-title">Tokens de Pensamiento vs Latencia</h3>
+                    <p class="chart-desc">Correlación entre profundidad de pensamiento y tiempo de respuesta</p>
                     <div class="chart-wrapper">
                         <canvas id="scatterChart"></canvas>
                     </div>
@@ -155,14 +155,14 @@
         </div>
     </section>
 
-    <!-- Detailed Table -->
+    <!-- Tabla Detallada -->
     <section class="section" id="details">
         <div class="container">
             <h2 class="section-title">
                 <span class="section-icon">📋</span>
-                Detailed Comparison
+                Comparación Detallada
             </h2>
-            <p class="section-subtitle">Full metrics table across all strategies</p>
+            <p class="section-subtitle">Tabla completa de métricas de todas las estrategias</p>
 
             <div class="table-wrapper">
                 <table class="data-table" id="comparisonTable">
@@ -175,25 +175,25 @@
         </div>
     </section>
 
-    <!-- Raw Runs Section -->
+    <!-- Ejecuciones Individuales -->
     <section class="section section-dark" id="runs">
         <div class="container">
             <h2 class="section-title">
                 <span class="section-icon">🔍</span>
-                Individual Runs
+                Ejecuciones Individuales
             </h2>
-            <p class="section-subtitle">Every single API call with full details</p>
+            <p class="section-subtitle">Cada llamada API individual con todos los detalles</p>
 
             <div class="filter-bar" id="filterBar">
                 <select id="filterStrategy" class="filter-select">
-                    <option value="all">All Strategies</option>
+                    <option value="all">Todas las Estrategias</option>
                 </select>
                 <select id="filterWord" class="filter-select">
-                    <option value="all">All Words</option>
+                    <option value="all">Todas las Palabras</option>
                 </select>
                 <label class="filter-checkbox">
                     <input type="checkbox" id="filterFailed">
-                    Show failures only
+                    Mostrar solo fallos
                 </label>
             </div>
 
@@ -201,67 +201,67 @@
         </div>
     </section>
 
-    <!-- Our Strategy Section -->
+    <!-- Sección de Nuestra Estrategia -->
     <section class="section" id="ourStrategy">
         <div class="container">
             <h2 class="section-title">
                 <span class="section-icon">🚀</span>
-                Our Strategy: Structured Cascade
+                Nuestra Estrategia: Cascada Estructurada
             </h2>
-            <p class="section-subtitle">A novel approach to eliminate reasoning explosions</p>
+            <p class="section-subtitle">Un enfoque novedoso para eliminar las explosiones de razonamiento</p>
 
             <div class="strategy-explainer">
                 <div class="strategy-diagram">
                     <div class="stage-card stage-1">
-                        <div class="stage-badge">Stage 1</div>
-                        <h4>Meaning Extraction</h4>
+                        <div class="stage-badge">Etapa 1</div>
+                        <h4>Extracción de Significados</h4>
                         <div class="stage-config">
                             <span class="config-tag tag-temp">temp=0.2</span>
                             <span class="config-tag tag-think">budget=1024</span>
                         </div>
-                        <p>Extract definitions, synonyms, antonyms</p>
+                        <p>Extraer definiciones, sinónimos, antónimos</p>
                     </div>
                     <div class="stage-arrow">→</div>
                     <div class="parallel-group">
-                        <div class="parallel-label">⚡ Parallel per meaning</div>
+                        <div class="parallel-label">⚡ Paralelo por significado</div>
                         <div class="stage-card stage-2">
-                            <div class="stage-badge">Stage 2</div>
-                            <h4>CEFR Examples</h4>
+                            <div class="stage-badge">Etapa 2</div>
+                            <h4>Ejemplos CEFR</h4>
                             <div class="stage-config">
                                 <span class="config-tag tag-temp">temp=0.7</span>
                                 <span class="config-tag tag-think">budget=1024</span>
                             </div>
-                            <p>Generate A1–C2 sentences</p>
+                            <p>Generar oraciones A1–C2</p>
                         </div>
                         <div class="stage-arrow">→</div>
                         <div class="stage-card stage-3">
-                            <div class="stage-badge">Stage 3</div>
-                            <h4>SpokenFi Transform</h4>
+                            <div class="stage-badge">Etapa 3</div>
+                            <h4>Transformación SpokenFi</h4>
                             <div class="stage-config">
                                 <span class="config-tag tag-temp">temp=0</span>
                                 <span class="config-tag tag-think tag-zero">budget=0</span>
                             </div>
-                            <p>No reasoning needed!</p>
+                            <p>¡No se necesita razonamiento!</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="strategy-results" id="cascadeResults">
-                    <h4>Key Results</h4>
+                    <h4>Resultados Clave</h4>
                     <div class="result-metric">
-                        <span class="result-label">Thought Token Reduction</span>
+                        <span class="result-label">Reducción de Tokens de Pensamiento</span>
                         <span class="result-value" id="cascadeThoughtReduction">—</span>
                     </div>
                     <div class="result-metric">
-                        <span class="result-label">Latency vs Monolithic</span>
+                        <span class="result-label">Latencia vs Monolítica</span>
                         <span class="result-value" id="cascadeLatencyDiff">—</span>
                     </div>
                     <div class="result-metric">
-                        <span class="result-label">Cost vs Monolithic</span>
+                        <span class="result-label">Costo vs Monolítica</span>
                         <span class="result-value" id="cascadeCostDiff">—</span>
                     </div>
                     <div class="result-metric">
-                        <span class="result-label">Failure Rate</span>
+                        <span class="result-label">Tasa de Fallos</span>
                         <span class="result-value" id="cascadeFailRate">—</span>
                     </div>
                 </div>
@@ -269,19 +269,19 @@
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- Pie de Página -->
     <footer class="footer">
         <div class="container">
-            <p>Gemini Latency Benchmark Suite — Contribution to GDE GenAI Circle Discussion</p>
-            <p class="footer-sub">Built to empirically validate claims about reasoning explosion in <code>gemini-3-flash-preview</code></p>
+            <p>Suite de Benchmark de Latencia Gemini — Contribución a la Discusión del GDE GenAI Circle</p>
+            <p class="footer-sub">Construido para validar empíricamente las afirmaciones sobre la explosión de razonamiento en <code>gemini-3-flash-preview</code></p>
         </div>
     </footer>
 
-    <!-- Load fallback / empty state -->
+    <!-- Estado de carga / estado vacío -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
-        <p>Loading benchmark data...</p>
-        <p class="loading-hint">Serve the repo root. If no snapshot exists yet, the dashboard will show an empty state until you run the benchmark.</p>
+        <p>Cargando datos del benchmark...</p>
+        <p class="loading-hint">Sirve la raíz del repositorio. Si no existe un snapshot, el panel mostrará un estado vacío hasta que ejecutes el benchmark.</p>
     </div>
 
     <script src="app.js"></script>

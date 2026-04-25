@@ -1,10 +1,10 @@
 /* ============================================================
-   Gemini Latency Benchmark Dashboard
-   Premium dark-mode design with glassmorphism
+   Panel de Control del Benchmark de Latencia Gemini
+   Diseño premium en modo oscuro con glassmorphism
    ============================================================ */
 
 :root {
-    /* Color palette */
+    /* Paleta de colores */
     --bg-primary: #0a0a0f;
     --bg-secondary: #12121a;
     --bg-card: rgba(20, 20, 35, 0.8);
@@ -46,7 +46,7 @@
     --transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Reset ── */
+/* ── Reinicio ── */
 *, *::before, *::after {
     margin: 0;
     padding: 0;
@@ -76,7 +76,7 @@ code {
     border-radius: 4px;
 }
 
-/* ── Layout ── */
+/* ── Diseño ── */
 .container {
     max-width: 1360px;
     margin: 0 auto;
@@ -111,7 +111,7 @@ code {
     margin-bottom: 2.5rem;
 }
 
-/* ── Hero ── */
+/* ── Hero (Encabezado) ── */
 .hero {
     position: relative;
     padding: 6rem 2rem 5rem;
@@ -211,7 +211,7 @@ code {
     font-weight: 500;
 }
 
-/* ── Claims Grid ── */
+/* ── Cuadrícula de Afirmaciones ── */
 .claims-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
@@ -331,7 +331,7 @@ code {
     color: var(--text-primary);
 }
 
-/* ── Charts ── */
+/* ── Gráficos ── */
 .charts-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -368,7 +368,7 @@ code {
     height: 320px;
 }
 
-/* ── Data Table ── */
+/* ── Tabla de Datos ── */
 .table-wrapper {
     overflow-x: auto;
     border-radius: var(--radius-lg);
@@ -427,7 +427,7 @@ code {
     color: var(--accent-rose);
 }
 
-/* ── Filter Bar ── */
+/* ── Barra de Filtros ── */
 .filter-bar {
     display: flex;
     gap: 1rem;
@@ -468,7 +468,7 @@ code {
     cursor: pointer;
 }
 
-/* ── Runs Grid ── */
+/* ── Cuadrícula de Ejecuciones ── */
 .runs-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -569,7 +569,7 @@ code {
     font-weight: 500;
 }
 
-/* ── Strategy Explainer ── */
+/* ── Explicación de Estrategia ── */
 .strategy-explainer {
     display: grid;
     grid-template-columns: 2fr 1fr;
@@ -733,7 +733,7 @@ code {
     font-weight: 600;
 }
 
-/* ── Footer ── */
+/* ── Pie de Página ── */
 .footer {
     padding: 3rem 2rem;
     text-align: center;
@@ -749,7 +749,7 @@ code {
     opacity: 0.7;
 }
 
-/* ── Loading ── */
+/* ── Carga ── */
 .loading-overlay {
     position: fixed;
     inset: 0;
@@ -786,7 +786,7 @@ code {
     color: var(--text-muted);
 }
 
-/* ── Empty State ── */
+/* ── Estado Vacío ── */
 .empty-state {
     text-align: center;
     padding: 4rem 2rem;

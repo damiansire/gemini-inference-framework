@@ -10,7 +10,7 @@ from ..utils import (
 from prompts import SYSTEM_MESSAGE, get_user_message
 
 async def run_thinking_budget(word, salt=None, thinking_level="LOW", timeout=120):
-    """Strategy 4: Monolithic with explicit thinking level cap and Streaming TTFT."""
+    """Estrategia 4: Monolítica con límite explícito de nivel de pensamiento y TTFT por streaming."""
     system_instruction = SYSTEM_MESSAGE
     if salt:
         system_instruction += f"\n\nBenchmark Salt: {salt}"

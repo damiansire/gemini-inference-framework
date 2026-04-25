@@ -1,124 +1,124 @@
-| Field      | Description |
+| Campo      | Descripción |
 |------------|------------|
-| Disclaimer | This repository represents only my personal views and approach and has not been peer-reviewed; do not take it as absolute truth until the corresponding review is completed. |
-| Status     | Pending peer review |
+| Aviso | Este repositorio representa únicamente mis puntos de vista y enfoque personales y no ha sido revisado por pares; no lo tomes como una verdad absoluta hasta que se complete la revisión correspondiente. |
+| Estado     | Pendiente de revisión por pares |
 
 
-# Gemini Reasoning Explosion — Empirical Benchmark & Mitigation Suite
+# Gemini Reasoning Explosion — Benchmark Empírico y Suite de Mitigación
 
-> **TL;DR:** A Finnish dictionary prompt causes `gemini-3-flash-preview` to consume **62k+ thought tokens** and take **4 minutes 19 seconds**. We built a benchmark of **120 controlled API calls** across **8 architectural strategies** and found that a **Structured Cascade** architecture reduces this to **17.2s with 100% reliability** — without changing the prompt content.
+> **TL;DR:** Un prompt para un diccionario de finlandés causa que `gemini-3-flash-preview` consuma **más de 62k tokens de pensamiento (thought tokens)** y tome **4 minutos y 19 segundos**. Construimos un benchmark de **120 llamadas API controladas** a través de **8 estrategias arquitectónicas** y descubrimos que la arquitectura de **Cascada Estructurada (Structured Cascade)** reduce esto a **17.2s con un 100% de fiabilidad** — sin cambiar el contenido del prompt.
 
 ---
 
-## Context: The Problem
+## Contexto: El Problema
 
-This project originated from a [GenAI Circle discussion] reported extreme latency and token waste with `gemini-3-flash-preview`:
+Este proyecto se originó a partir de una [discusión en GenAI Circle] que reportó latencia extrema y desperdicio de tokens con `gemini-3-flash-preview`:
 
-| Metric | Reported Value |
+| Métrica | Valor Reportado |
 |---|---|
-| Duration | **4 minutes 19 seconds** |
-| Input Tokens | ~3,400 |
-| Output Tokens | ~1,069 |
-| Thought Tokens | **62,910** |
+| Duración | **4 minutos 19 segundos** |
+| Tokens de Entrada | ~3,400 |
+| Tokens de Salida | ~1,069 |
+| Tokens de Pensamiento | **62,910** |
 
-The prompt generates structured JSON dictionary entries for Finnish words, requiring CEFR-leveled examples and phonological transformations to spoken Finnish (`spokenFi`). Our working hypothesis: the model enters **reasoning loops** due to competing constraints — strict JSON + creative generation + deterministic linguistic rules.
+El prompt genera entradas de diccionario estructuradas en JSON para palabras en finlandés, requiriendo ejemplos nivelados por CEFR y transformaciones fonológicas a finlandés hablado (`spokenFi`). Nuestra hipótesis de trabajo: el modelo entra en **bucles de razonamiento (reasoning loops)** debido a restricciones en competencia — estructura JSON estricta + generación creativa + reglas lingüísticas deterministas.
 
 ---
 
-## Benchmark Results (n=120)
+## Resultados del Benchmark (n=120)
 
-**8 strategies × 5 words × 3 iterations** — with UUID+epoch cache busting, randomized execution order, model warmup, and structural output validation.
+**8 estrategias × 5 palabras × 3 iteraciones** — con invalidación de caché (cache busting) mediante UUID+epoch, orden de ejecución aleatorio, calentamiento del modelo (model warmup) y validación estructural de la salida.
 
-| Strategy | Avg Latency | Avg Thought Tokens | Max Thought | Avg Cost (USD) | Success Rate | Failure Rate |
+| Estrategia | Latencia Promedio | Promedio Tokens Pensamiento | Máx Tokens Pensamiento | Costo Promedio (USD) | Tasa de Éxito | Tasa de Fallo |
 |---|---|---|---|---|---|---|
-| **Thinking Budget (LOW)** | **8.2s** ⚡ | **0** | 0 | $0.0007 | 93.3% | 6.7% |
-| **Lazy Optimized (A1-B1)** | **16.1s** | 2,586 | 6,620 | $0.0014 | 100% | 0% |
-| **Structured Cascade** | **17.2s** ✅ | 3,862 | 10,195 | $0.0023 | **100%** | **0%** |
-| Optimized Monolithic | 20.7s | 2,645 | 5,785 | $0.0015 | 73.3% | 26.7% |
-| Monolithic (No Schema) | 22.0s | 2,648 | 4,498 | $0.0018 | 100% | 0% |
-| Monolithic (Strict Schema) | 28.9s | 4,049 | 6,597 | $0.0024 | 100% | 0% |
-| Pro Model (3.1) | 54.7s | 4,822 | 7,420 | **$0.0340** 💸 | 86.7% | 13.3% |
-| **Pipeline (Multi-stage)** | **152.9s** 🐌 | **10,713** | **18,144** | $0.0049 | 93.3% | 6.7% |
+| **Presupuesto de Pensamiento (LOW)** | **8.2s** ⚡ | **0** | 0 | $0.0007 | 93.3% | 6.7% |
+| **Optimización Perezosa (Lazy) (A1-B1)** | **16.1s** | 2,586 | 6,620 | $0.0014 | 100% | 0% |
+| **Cascada Estructurada (Cascade)** | **17.2s** ✅ | 3,862 | 10,195 | $0.0023 | **100%** | **0%** |
+| Monolítica Optimizada | 20.7s | 2,645 | 5,785 | $0.0015 | 73.3% | 26.7% |
+| Monolítica (Sin Schema) | 22.0s | 2,648 | 4,498 | $0.0018 | 100% | 0% |
+| Monolítica (Schema Estricto) | 28.9s | 4,049 | 6,597 | $0.0024 | 100% | 0% |
+| Modelo Pro (3.1) | 54.7s | 4,822 | 7,420 | **$0.0340** 💸 | 86.7% | 13.3% |
+| **Pipeline (Multi-etapa)** | **152.9s** 🐌 | **10,713** | **18,144** | $0.0049 | 93.3% | 6.7% |
 
-> **Test words:** `hana`, `kuusi`, `juosta`, `vanha`, `silta` — deliberately chosen for varying lexical ambiguity (hana = 3+ meanings vs. silta = 1 clear meaning).
+> **Palabras de prueba:** `hana`, `kuusi`, `juosta`, `vanha`, `silta` — elegidas deliberadamente por su variable ambigüedad léxica (hana = 3+ significados vs. silta = 1 significado claro).
 
 ---
 
-## Key Findings
+## Hallazgos Clave
 
-### 1. Root Cause: Instruction Friction
+### 1. Causa Raíz: Fricción en las Instrucciones
 
-The 62k thought tokens emerge from three competing cognitive modes in a single prompt:
+Los 62k tokens de pensamiento emergen de tres modos cognitivos compitiendo en un solo prompt:
 
-1. **Creative generation** — pedagogically appropriate CEFR-leveled Finnish sentences
-2. **Deterministic transformation** — 10 specific phonological rules for `spokenFi`
-3. **Strict JSON structure** — nested arrays, exact field names, enum values
+1. **Generación creativa** — oraciones en finlandés niveladas por CEFR y pedagógicamente apropiadas
+2. **Transformación determinista** — 10 reglas fonológicas específicas para el `spokenFi`
+3. **Estructura JSON estricta** — arreglos anidados, nombres de campos exactos, valores enum
 
-The model constantly re-derives rules while questioning whether its creative output violates structural constraints, creating a reasoning spiral.
+El modelo deriva constantemente las reglas mientras se cuestiona si su salida creativa viola las restricciones estructurales, creando una espiral de razonamiento.
 
-### 2. Structured Cascade is the Production Answer
+### 2. La Cascada Estructurada es la Solución para Producción
 
-The **Structured Cascade** decomposes the task into 3 specialized stages with per-stage thinking controls:
+La **Cascada Estructurada** descompone la tarea en 3 etapas especializadas con controles de pensamiento por etapa:
 
-| Stage | Task | Thinking Level | Temperature |
+| Etapa | Tarea | Nivel de Pensamiento | Temperatura |
 |---|---|---|---|
-| Stage 1 | Extract meanings & definitions | `LOW` | 0.2 |
-| Stage 2 | Generate CEFR examples (parallel) | `LOW` | 0.7 |
-| Stage 3 | SpokenFi transformation (parallel) | `MINIMAL` | 0.0 |
+| Etapa 1 | Extraer significados y definiciones | `LOW` | 0.2 |
+| Etapa 2 | Generar ejemplos CEFR (en paralelo) | `LOW` | 0.7 |
+| Etapa 3 | Transformación SpokenFi (en paralelo) | `MINIMAL` | 0.0 |
 
-**Result:** 17.2s average with **100% success rate** across all 15 runs. Stage 2 and 3 run in parallel via `asyncio.gather`.
+**Resultado:** Promedio de 17.2s con **100% de tasa de éxito** a lo largo de las 15 ejecuciones. Las etapas 2 y 3 se ejecutan en paralelo vía `asyncio.gather`.
 
-### 3. Pipeline is an Anti-Pattern
+### 3. Pipeline es un Anti-Patrón
 
-The most counterintuitive finding: **Pipeline (sequential multi-stage) is the worst strategy at 152.9s**. Without thinking controls, Stage 3 (spokenFi) enters 45-second reasoning spirals on every meaning, one at a time. Cascade avoids this by capping Stage 3's thinking to `MINIMAL` and running meanings in parallel.
+El hallazgo más contraintuitivo: **Pipeline (multi-etapa secuencial) es la peor estrategia con 152.9s**. Sin controles de pensamiento, la Etapa 3 (spokenFi) entra en espirales de razonamiento de 45 segundos por cada significado, uno a la vez. Cascade evita esto limitando el pensamiento de la Etapa 3 a `MINIMAL` y ejecutando los significados en paralelo.
 
-### 4. Pro Model Does Not Solve Architectural Problems
+### 4. El Modelo Pro No Resuelve Problemas Arquitectónicos
 
-`gemini-3.1-pro-preview` averaged **54.7s at $0.034/call** — 19x more expensive than Flash with **lower reliability (86.7%)**. For structured generation, architecture beats raw model power.
+`gemini-3.1-pro-preview` promedió **54.7s a $0.034/llamada** — 19x más caro que Flash con una **menor fiabilidad (86.7%)**. Para tareas de generación estructurada, la arquitectura supera el poder bruto del modelo.
 
-### 5. Suppressing Thinking is Fast but Fragile
+### 5. Suprimir el Pensamiento es Rápido pero Frágil
 
-`thinking_level=LOW` produces the fastest results (8.2s) with **zero thought tokens**, but sacrifices **6.7% of outputs** to JSON validation failures. Acceptable with retry logic; not suitable for fire-and-forget production.
+`thinking_level=LOW` produce los resultados más rápidos (8.2s) con **cero tokens de pensamiento**, pero sacrifica el **6.7% de las salidas** a errores de validación JSON. Aceptable con lógica de reintentos; no apto para una producción tipo fire-and-forget.
 
 ---
 
-## Strategies Tested
+## Estrategias Probadas
 
-| # | Strategy | Description | Key Insight |
+| # | Estrategia | Descripción | Insight Clave |
 |---|----------|-------------|-------------|
-| 1 | Monolithic (No Schema) | Original prompt — baseline control | 22s avg, 100% reliable |
-| 2 | Monolithic (Strict Schema) | API-level `response_schema` enforcement | +31% latency vs baseline due to schema compliance overhead |
-| 3 | Optimized Monolithic | Shorter prompt with Few-Shot patterns | Fast but 26.7% failure rate |
-| 4 | Lazy Optimized (A1-B1) | Only generates 3 CEFR levels instead of 6 | Best cost/performance for partial output |
-| 5 | **Structured Cascade** | Per-stage thinking + parallel execution | **Production winner — 17.2s, 100% success** |
-| 6 | Pipeline (Multi-stage) | Sequential decomposition, no thinking control | Worst: 152.9s, reasoning spirals in Stage 3 |
-| 7 | Thinking Budget (LOW) | Monolithic with `thinking_level=LOW` | Fastest at 8.2s, but 6.7% malformed outputs |
-| 8 | Pro Model | `gemini-3.1-pro-preview` | 19x cost, lower reliability than architected Flash |
+| 1 | Monolítica (Sin Schema) | Prompt original — control de referencia | 22s prom, 100% fiable |
+| 2 | Monolítica (Schema Estricto) | Cumplimiento vía `response_schema` a nivel de API | +31% de latencia vs referencia por la carga adicional de cumplir el schema |
+| 3 | Monolítica Optimizada | Prompt más corto con patrones Few-Shot | Rápida pero con 26.7% de tasa de fallo |
+| 4 | Optimización Perezosa (A1-B1) | Solo genera 3 niveles CEFR en vez de 6 | Mejor rendimiento/costo para salidas parciales |
+| 5 | **Cascada Estructurada** | Pensamiento por etapa + ejecución en paralelo | **Ganadora en Producción — 17.2s, 100% de éxito** |
+| 6 | Pipeline (Multi-etapa) | Descomposición secuencial, sin control de pensamiento | La peor: 152.9s, espirales de razonamiento en la Etapa 3 |
+| 7 | Presupuesto de Pensamiento (LOW) | Monolítica con `thinking_level=LOW` | La más rápida con 8.2s, pero 6.7% de salidas malformadas |
+| 8 | Modelo Pro | `gemini-3.1-pro-preview` | Costo 19x, menor fiabilidad que el modelo Flash con buena arquitectura |
 
 ---
 
-## Project Structure
+## Estructura del Proyecto
 
 ```
-├── compare_benchmarks.py    # Main orchestrator (120+ runs, report generation)
-├── prompts.py               # All prompt variants, system messages, schemas
+├── compare_benchmarks.py    # Orquestador principal (120+ ejecuciones, generación de reportes)
+├── prompts.py               # Todas las variantes de prompts, system messages, schemas
 ├── .env                     # GOOGLE_API_KEY
 ├── strategies/
-│   ├── monolithic/          # Baseline strategy
-│   ├── monolithic_schema/   # Strict schema enforcement
-│   ├── optimized_monolithic/# Shortened few-shot prompt
-│   ├── lazy_optimized/      # Partial CEFR (A1-B1 only)
-│   ├── cascade/             # ✅ Structured Cascade (production)
-│   ├── pipeline/            # Sequential multi-stage  
-│   ├── thinking_budget/     # thinking_level=LOW cap
+│   ├── monolithic/          # Estrategia base (baseline)
+│   ├── monolithic_schema/   # Cumplimiento estricto del schema
+│   ├── optimized_monolithic/# Prompt few-shot acortado
+│   ├── lazy_optimized/      # CEFR Parcial (solo A1-B1)
+│   ├── cascade/             # ✅ Cascada Estructurada (producción)
+│   ├── pipeline/            # Multi-etapa secuencial  
+│   ├── thinking_budget/     # Límite con thinking_level=LOW
 │   ├── pro_model/           # gemini-3.1-pro-preview
-│   ├── output_validation.py # JSON + CEFR structure validator
-│   └── utils.py             # Shared: cost rates, metrics, API helpers
-├── benchmark_results/       # Generated reports, raw JSON, drafts
+│   ├── output_validation.py # Validador estructural JSON + CEFR
+│   └── utils.py             # Compartido: tasas de costo, métricas, helpers de API
+├── benchmark_results/       # Reportes generados, JSONs raw, borradores
 ├── docs/
-│   ├── ARCHITECTURE.md      # Technical analysis of reasoning explosion
+│   ├── ARCHITECTURE.md      # Análisis técnico de la explosión de razonamiento
 │   └── ...
-└── dashboard/               # Visualization UI
+└── dashboard/               # UI de visualización
     ├── index.html
     ├── index.css
     └── app.js
@@ -126,56 +126,56 @@ The most counterintuitive finding: **Pipeline (sequential multi-stage) is the wo
 
 ---
 
-## Quick Start
+## Inicio Rápido
 
 ```bash
-# 1. Install dependencies
+# 1. Instalar dependencias
 ./venv/bin/pip install google-genai python-dotenv
 
-# 2. Quick smoke test (1 word, 1 iteration)
+# 2. Prueba rápida de humo (1 palabra, 1 iteración)
 ./venv/bin/python compare_benchmarks.py --words silta --iterations 1
 
-# 3. Full benchmark (all 8 strategies, 5 words, 3 iterations = 120 calls)
+# 3. Benchmark completo (las 8 estrategias, 5 palabras, 3 iteraciones = 120 llamadas)
 ./venv/bin/python compare_benchmarks.py \
   --strategies monolithic monolithic_schema optimized_monolithic lazy_optimized pipeline cascade thinking_budget pro_model \
   --iterations 3
 
-# 4. View dashboard
+# 4. Ver dashboard
 ./venv/bin/python -m http.server 8080
-# Open http://localhost:8080/dashboard/
+# Abrir http://localhost:8080/dashboard/
 ```
 
-## Custom Runs
+## Ejecuciones Personalizadas
 
 ```bash
-# Test specific strategies
+# Probar estrategias específicas
 ./venv/bin/python compare_benchmarks.py --strategies monolithic cascade --iterations 5
 
-# Test specific words
+# Probar palabras específicas
 ./venv/bin/python compare_benchmarks.py --words hana kuusi --iterations 3
 
-# Adjust timeout (default: 180s)
+# Ajustar el límite de tiempo (timeout, por defecto: 180s)
 ./venv/bin/python compare_benchmarks.py --timeout 240
 ```
 
 ---
 
-## Recommendations for Production
+## Recomendaciones para Producción
 
-1. **For full dictionary entries (6 CEFR levels + spokenFi):** Use **Structured Cascade** — 17.2s, 100% reliability, $0.002/call.
-2. **For maximum speed with retry tolerance:** `thinking_level=LOW` monolithic — 8.2s, requires ~7% retry rate.
-3. **For partial content (A1-B1 only):** Lazy Optimized — 16.1s, 100% reliable, lowest cost.
-4. **Avoid:** Pipeline without thinking controls. Pro Model for structured generation tasks.
+1. **Para entradas completas de diccionario (6 niveles CEFR + spokenFi):** Usar **Cascada Estructurada** — 17.2s, 100% de fiabilidad, $0.002/llamada.
+2. **Para la máxima velocidad con tolerancia a reintentos:** Monolítica con `thinking_level=LOW` — 8.2s, requiere ~7% de tasa de reintento.
+3. **Para contenido parcial (solo A1-B1):** Optimización Perezosa (Lazy Optimized) — 16.1s, 100% de fiabilidad, el costo más bajo.
+4. **Evitar:** Pipeline sin controles de pensamiento. Modelo Pro para tareas de generación estructurada.
 
 ---
 
-## Requirements
+## Requisitos
 
 - Python 3.10+
-- `google-genai` SDK
+- SDK `google-genai`
 - `python-dotenv`
-- Google API Key with Gemini access (in `.env`)
+- Clave de API de Google con acceso a Gemini (en `.env`)
 
 ---
 
-*Benchmark methodology: UUID+epoch cache busting per call, randomized execution order, model warmup, output validation (JSON structure + CEFR level completeness). Models: `gemini-3-flash-preview`, `gemini-3.1-pro-preview`.*
+*Metodología del Benchmark: invalidación de caché (cache busting) por llamada con UUID+epoch, orden de ejecución aleatorio, calentamiento del modelo, validación de la salida (estructura JSON + completitud del nivel CEFR). Modelos: `gemini-3-flash-preview`, `gemini-3.1-pro-preview`.*

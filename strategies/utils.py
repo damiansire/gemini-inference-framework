@@ -14,7 +14,7 @@ COST_RATES = {
 
 
 class MetricsTracker:
-    """Thread-safe metrics accumulator for multi-stage strategies."""
+    """Acumulador de métricas thread-safe para estrategias multi-etapa."""
 
     def __init__(self):
         self._lock = asyncio.Lock()
@@ -79,7 +79,7 @@ def _create_async_client():
 
 
 def _extract_usage(usage):
-    """Extract token counts from new SDK usage_metadata."""
+    """Extraer conteo de tokens del usage_metadata del nuevo SDK."""
     if not usage:
         return 0, 0, 0, 0
 
@@ -108,7 +108,7 @@ def _extract_response_text(response):
 
 
 async def generate_content_sync(model: str, contents, config, timeout: float | None = None):
-    """Run a non-streaming request and return a normalized response payload."""
+    """Ejecutar una solicitud sin streaming y retornar un payload de respuesta normalizado."""
     client = _create_client()
     start = time.time()
 
@@ -126,12 +126,12 @@ async def generate_content_sync(model: str, contents, config, timeout: float | N
         "parsed": getattr(response, "parsed", None),
         "usage": getattr(response, "usage_metadata", None),
         "duration": duration,
-        "ttft": None,  # TTFT not measurable without streaming
+        "ttft": None,  # TTFT no medible sin streaming
     }
 
 
 async def generate_content_stream(model: str, contents, config, timeout: float | None = None):
-    """Run a streaming request and return the concatenated text plus usage metadata."""
+    """Ejecutar una solicitud con streaming y retornar el texto concatenado más los metadatos de uso."""
     client = _create_async_client()
     start = time.time()
     ttft = 0.0

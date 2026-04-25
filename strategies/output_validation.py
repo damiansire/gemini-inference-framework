@@ -15,7 +15,7 @@ MORPHOLOGICAL_FORM_MARKERS = (
 )
 
 
-def _strip_code_fence(text: str) -> str:
+def _strip_code_fence(text: str) -> str:  # Eliminar bloques de código
     stripped = text.strip()
     if stripped.startswith("```json") and stripped.endswith("```"):
         return stripped[7:-3].strip()
@@ -37,7 +37,7 @@ def parse_payload(payload):
         return None, [f"invalid JSON output: {exc.msg}"]
 
 
-def validate_dictionary_output(payload, expected_levels=FULL_LEVELS):
+def validate_dictionary_output(payload, expected_levels=FULL_LEVELS):  # Validar salida del diccionario
     data, errors = parse_payload(payload)
     if errors:
         return {"ok": False, "errors": errors, "normalized": None}

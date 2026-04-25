@@ -1,9 +1,9 @@
 /**
- * Gemini Latency Benchmark Dashboard — App Logic
- * Loads benchmark_results/benchmark_data.json when a snapshot exists
+ * Panel de Control del Benchmark de Latencia Gemini — Lógica de la Aplicación
+ * Carga benchmark_results/benchmark_data.json cuando existe un snapshot
  */
 
-// ── Chart.js global config ──
+// ── Configuración global de Chart.js ──
 Chart.defaults.color = '#8888a0';
 Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.06)';
 Chart.defaults.font.family = "'Inter', sans-serif";
@@ -11,7 +11,7 @@ Chart.defaults.font.size = 12;
 Chart.defaults.plugins.legend.labels.usePointStyle = true;
 Chart.defaults.plugins.legend.labels.pointStyleWidth = 12;
 
-// Strategy colors
+// Colores por estrategia
 const STRATEGY_COLORS = {
     monolithic: { bg: 'rgba(99, 102, 241, 0.7)', border: '#6366f1' },
     monolithic_schema: { bg: 'rgba(139, 92, 246, 0.7)', border: '#8b5cf6' },
@@ -25,7 +25,7 @@ const STRATEGY_COLORS = {
 
 let benchmarkData = null;
 
-// ── Init ──
+// ── Inicialización ──
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         const resp = await fetch('../benchmark_results/benchmark_data.json');
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         benchmarkData = await resp.json();
         renderDashboard(benchmarkData);
     } catch (err) {
-        console.error('Failed to load benchmark data:', err);
+        console.error('Error al cargar datos del benchmark:', err);
         showEmptyState();
     } finally {
         document.getElementById('loadingOverlay').classList.add('hidden');
@@ -46,8 +46,8 @@ function showEmptyState() {
         s.innerHTML = `
             <div class="container">
                 <div class="empty-state">
-                    <h3>No Current Benchmark Snapshot</h3>
-                    <p>This dashboard reads a generated dataset from <code>benchmark_results/benchmark_data.json</code>. None exists in this checkout yet.</p>
+                    <h3>Sin Snapshot de Benchmark Actual</h3>
+                    <p>Este panel lee un dataset generado desde <code>benchmark_results/benchmark_data.json</code>. Aún no existe ninguno en este checkout.</p>
                     <code>./venv/bin/python compare_benchmarks.py --iterations 3</code>
                 </div>
             </div>
@@ -55,7 +55,7 @@ function showEmptyState() {
     });
 }
 
-// ── Main render ──
+// ── Renderizado principal ──
 function renderDashboard(data) {
     renderHeroStats(data);
     renderClaims(data);
@@ -69,7 +69,7 @@ function renderDashboard(data) {
     setupFilters(data);
 }
 
-// ── Hero Stats ──
+// ── Estadísticas del Hero ──
 function renderHeroStats(data) {
     const meta = data.metadata;
     document.getElementById('statStrategies').textContent = meta.strategies_tested.length;
@@ -77,16 +77,16 @@ function renderHeroStats(data) {
     document.getElementById('statRuns').textContent = data.raw_runs.length;
 
     const ts = new Date(meta.timestamp);
-    document.getElementById('statTimestamp').textContent = ts.toLocaleDateString('en-US', {
+    document.getElementById('statTimestamp').textContent = ts.toLocaleDateString('es-ES', {
         month: 'short', day: 'numeric', year: 'numeric'
     });
 }
 
-// ── Claims Verification ──
+// ── Verificación de Afirmaciones ──
 function renderClaims(data) {
     const summaries = data.summaries;
 
-    // Claim 1: Extreme thought tokens
+    // Afirmación 1: Tokens de pensamiento extremos
     const monoSummary = summaries.monolithic || summaries.monolithic_schema;
     if (monoSummary) {
         const maxThought = monoSummary.max_thought_tokens || 0;
@@ -96,18 +96,18 @@ function renderClaims(data) {
 
         const verdict1 = document.getElementById('verdict1');
         if (maxThought > 30000) {
-            verdict1.textContent = 'CONFIRMED';
+            verdict1.textContent = 'CONFIRMADO';
             verdict1.className = 'claim-verdict confirmed';
         } else if (maxThought > 10000) {
-            verdict1.textContent = 'PARTIALLY';
+            verdict1.textContent = 'PARCIALMENTE';
             verdict1.className = 'claim-verdict partial';
         } else {
-            verdict1.textContent = 'NOT REPRODUCED';
+            verdict1.textContent = 'NO REPRODUCIDO';
             verdict1.className = 'claim-verdict refuted';
         }
     }
 
-    // Claim 2: Flash gets trapped in loops
+    // Afirmación 2: Flash queda atrapado en bucles
     if (monoSummary) {
         const failRate = monoSummary.failure_rate || 0;
         document.getElementById('flashFailRate').textContent = `${(failRate * 100).toFixed(0)}%`;
@@ -117,23 +117,23 @@ function renderClaims(data) {
             const reduction = monoSummary.avg_thought_tokens > 0
                 ? ((1 - budgetSummary.avg_thought_tokens / monoSummary.avg_thought_tokens) * 100).toFixed(0)
                 : 0;
-            document.getElementById('budgetEffect').textContent = `${reduction}% reduction`;
+            document.getElementById('budgetEffect').textContent = `${reduction}% de reducción`;
         }
 
         const verdict2 = document.getElementById('verdict2');
         if (failRate > 0.1 || (monoSummary.max_thought_tokens > 20000)) {
-            verdict2.textContent = 'CONFIRMED';
+            verdict2.textContent = 'CONFIRMADO';
             verdict2.className = 'claim-verdict confirmed';
         } else if (monoSummary.std_duration > 10) {
-            verdict2.textContent = 'PARTIALLY';
+            verdict2.textContent = 'PARCIALMENTE';
             verdict2.className = 'claim-verdict partial';
         } else {
-            verdict2.textContent = 'NOT OBSERVED';
+            verdict2.textContent = 'NO OBSERVADO';
             verdict2.className = 'claim-verdict refuted';
         }
     }
 
-    // Claim 3: Pro is more efficient
+    // Afirmación 3: Pro es más eficiente
     const proSummary = summaries.pro_model;
     if (proSummary && monoSummary) {
         const costDiff = proSummary.avg_cost > 0 && monoSummary.avg_cost > 0
@@ -144,19 +144,19 @@ function renderClaims(data) {
 
         const verdict3 = document.getElementById('verdict3');
         if (proSummary.failure_rate < monoSummary.failure_rate && proSummary.avg_thought_tokens < monoSummary.avg_thought_tokens) {
-            verdict3.textContent = 'CONFIRMED';
+            verdict3.textContent = 'CONFIRMADO';
             verdict3.className = 'claim-verdict confirmed';
         } else if (proSummary.avg_thought_tokens < monoSummary.avg_thought_tokens) {
-            verdict3.textContent = 'PARTIALLY';
+            verdict3.textContent = 'PARCIALMENTE';
             verdict3.className = 'claim-verdict partial';
         } else {
-            verdict3.textContent = 'NOT CONFIRMED';
+            verdict3.textContent = 'NO CONFIRMADO';
             verdict3.className = 'claim-verdict refuted';
         }
     }
 }
 
-// ── Latency Chart ──
+// ── Gráfico de Latencia ──
 function renderLatencyChart(data) {
     const ctx = document.getElementById('latencyChart').getContext('2d');
     const summaries = data.summaries;
@@ -173,7 +173,7 @@ function renderLatencyChart(data) {
             labels,
             datasets: [
                 {
-                    label: 'Avg Latency',
+                    label: 'Latencia Prom',
                     data: avgData,
                     backgroundColor: strategies.map(s => STRATEGY_COLORS[s]?.bg || 'rgba(99,102,241,0.5)'),
                     borderColor: strategies.map(s => STRATEGY_COLORS[s]?.border || '#6366f1'),
@@ -181,7 +181,7 @@ function renderLatencyChart(data) {
                     borderRadius: 6,
                 },
                 {
-                    label: 'Min Latency',
+                    label: 'Latencia Mín',
                     data: minData,
                     backgroundColor: 'rgba(52, 211, 153, 0.25)',
                     borderColor: '#34d399',
@@ -189,7 +189,7 @@ function renderLatencyChart(data) {
                     borderRadius: 4,
                 },
                 {
-                    label: 'Max Latency',
+                    label: 'Latencia Máx',
                     data: maxData,
                     backgroundColor: 'rgba(251, 113, 133, 0.25)',
                     borderColor: '#fb7185',
@@ -210,7 +210,7 @@ function renderLatencyChart(data) {
             },
             scales: {
                 y: {
-                    title: { display: true, text: 'Seconds' },
+                    title: { display: true, text: 'Segundos' },
                     beginAtZero: true,
                     grid: { color: 'rgba(255,255,255,0.04)' },
                 },
@@ -223,7 +223,7 @@ function renderLatencyChart(data) {
     });
 }
 
-// ── Thought Tokens Chart ──
+// ── Gráfico de Tokens de Pensamiento ──
 function renderThoughtChart(data) {
     const ctx = document.getElementById('thoughtChart').getContext('2d');
     const summaries = data.summaries;
@@ -239,7 +239,7 @@ function renderThoughtChart(data) {
             labels,
             datasets: [
                 {
-                    label: 'Avg Thought Tokens',
+                    label: 'Prom Tokens de Pensamiento',
                     data: avgData,
                     backgroundColor: strategies.map(s => STRATEGY_COLORS[s]?.bg || 'rgba(99,102,241,0.5)'),
                     borderColor: strategies.map(s => STRATEGY_COLORS[s]?.border || '#6366f1'),
@@ -247,7 +247,7 @@ function renderThoughtChart(data) {
                     borderRadius: 6,
                 },
                 {
-                    label: 'Max Thought Tokens',
+                    label: 'Máx Tokens de Pensamiento',
                     data: maxData,
                     backgroundColor: 'rgba(251, 113, 133, 0.3)',
                     borderColor: '#fb7185',
@@ -281,21 +281,21 @@ function renderThoughtChart(data) {
     });
 }
 
-// ── Cost Chart ──
+// ── Gráfico de Costos ──
 function renderCostChart(data) {
     const ctx = document.getElementById('costChart').getContext('2d');
     const summaries = data.summaries;
     const strategies = Object.keys(summaries);
 
     const labels = strategies.map(s => summaries[s].name);
-    const costData = strategies.map(s => summaries[s].avg_cost * 1000);  // Convert to millicents for readability
+    const costData = strategies.map(s => summaries[s].avg_cost * 1000);  // Convertir a milésimas de dólar para legibilidad
 
     new Chart(ctx, {
         type: 'bar',
         data: {
             labels,
             datasets: [{
-                label: 'Avg Cost (×10⁻³ $)',
+                label: 'Costo Prom (×10⁻³ $)',
                 data: costData,
                 backgroundColor: strategies.map(s => STRATEGY_COLORS[s]?.bg || 'rgba(99,102,241,0.5)'),
                 borderColor: strategies.map(s => STRATEGY_COLORS[s]?.border || '#6366f1'),
@@ -315,7 +315,7 @@ function renderCostChart(data) {
             },
             scales: {
                 y: {
-                    title: { display: true, text: 'Cost (× $0.001)' },
+                    title: { display: true, text: 'Costo (× $0.001)' },
                     beginAtZero: true,
                     grid: { color: 'rgba(255,255,255,0.04)' },
                 },
@@ -328,12 +328,12 @@ function renderCostChart(data) {
     });
 }
 
-// ── Scatter: Thought Tokens vs Latency ──
+// ── Dispersión: Tokens de Pensamiento vs Latencia ──
 function renderScatterChart(data) {
     const ctx = document.getElementById('scatterChart').getContext('2d');
     const runs = data.raw_runs.filter(r => r.success);
 
-    // Group by strategy
+    // Agrupar por estrategia
     const strategyGroups = {};
     runs.forEach(r => {
         if (!strategyGroups[r.strategy]) strategyGroups[r.strategy] = [];
@@ -372,11 +372,11 @@ function renderScatterChart(data) {
             },
             scales: {
                 x: {
-                    title: { display: true, text: 'Thought Tokens' },
+                    title: { display: true, text: 'Tokens de Pensamiento' },
                     grid: { color: 'rgba(255,255,255,0.04)' },
                 },
                 y: {
-                    title: { display: true, text: 'Latency (s)' },
+                    title: { display: true, text: 'Latencia (s)' },
                     grid: { color: 'rgba(255,255,255,0.04)' },
                 },
             },
@@ -384,34 +384,34 @@ function renderScatterChart(data) {
     });
 }
 
-// ── Comparison Table ──
+// ── Tabla Comparativa ──
 function renderComparisonTable(data) {
     const summaries = data.summaries;
     const strategies = Object.keys(summaries);
 
-    // Header
+    // Encabezado
     const headerRow = document.getElementById('tableHeader');
-    headerRow.innerHTML = '<th>Metric</th>';
+    headerRow.innerHTML = '<th>Métrica</th>';
     strategies.forEach(s => {
         const th = document.createElement('th');
         th.textContent = summaries[s].name;
         headerRow.appendChild(th);
     });
 
-    // Rows
+    // Filas
     const metrics = [
-        { key: 'avg_duration', label: 'Avg Latency', fmt: v => `${v.toFixed(2)}s`, best: 'min' },
-        { key: 'min_duration', label: 'Min Latency', fmt: v => `${v.toFixed(2)}s`, best: 'min' },
-        { key: 'max_duration', label: 'Max Latency', fmt: v => `${v.toFixed(2)}s`, best: 'min' },
-        { key: 'std_duration', label: 'Latency StdDev', fmt: v => `±${v.toFixed(2)}s`, best: 'min' },
-        { key: 'avg_thought_tokens', label: 'Avg Thought Tokens', fmt: v => v.toLocaleString(undefined, { maximumFractionDigits: 0 }), best: 'min' },
-        { key: 'max_thought_tokens', label: 'Max Thought Tokens', fmt: v => v.toLocaleString(undefined, { maximumFractionDigits: 0 }), best: 'min' },
-        { key: 'avg_total_tokens', label: 'Avg Total Tokens', fmt: v => v.toLocaleString(undefined, { maximumFractionDigits: 0 }), best: 'min' },
-        { key: 'avg_cost', label: 'Avg Cost', fmt: v => `$${v.toFixed(5)}`, best: 'min' },
-        { key: 'api_success_rate', label: 'API Success Rate', fmt: v => `${(v * 100).toFixed(0)}%`, best: 'max' },
-        { key: 'valid_output_rate', label: 'Valid Output Rate', fmt: v => `${(v * 100).toFixed(0)}%`, best: 'max' },
-        { key: 'failure_rate', label: 'Failure Rate', fmt: v => `${(v * 100).toFixed(0)}%`, best: 'min' },
-        { key: 'successful_runs', label: 'Successful Runs', fmt: v => v, best: 'max' },
+        { key: 'avg_duration', label: 'Latencia Prom', fmt: v => `${v.toFixed(2)}s`, best: 'min' },
+        { key: 'min_duration', label: 'Latencia Mín', fmt: v => `${v.toFixed(2)}s`, best: 'min' },
+        { key: 'max_duration', label: 'Latencia Máx', fmt: v => `${v.toFixed(2)}s`, best: 'min' },
+        { key: 'std_duration', label: 'DesvEst Latencia', fmt: v => `±${v.toFixed(2)}s`, best: 'min' },
+        { key: 'avg_thought_tokens', label: 'Prom Tokens Pensamiento', fmt: v => v.toLocaleString(undefined, { maximumFractionDigits: 0 }), best: 'min' },
+        { key: 'max_thought_tokens', label: 'Máx Tokens Pensamiento', fmt: v => v.toLocaleString(undefined, { maximumFractionDigits: 0 }), best: 'min' },
+        { key: 'avg_total_tokens', label: 'Prom Total Tokens', fmt: v => v.toLocaleString(undefined, { maximumFractionDigits: 0 }), best: 'min' },
+        { key: 'avg_cost', label: 'Costo Prom', fmt: v => `$${v.toFixed(5)}`, best: 'min' },
+        { key: 'api_success_rate', label: 'Tasa Éxito API', fmt: v => `${(v * 100).toFixed(0)}%`, best: 'max' },
+        { key: 'valid_output_rate', label: 'Tasa Salidas Válidas', fmt: v => `${(v * 100).toFixed(0)}%`, best: 'max' },
+        { key: 'failure_rate', label: 'Tasa de Fallos', fmt: v => `${(v * 100).toFixed(0)}%`, best: 'min' },
+        { key: 'successful_runs', label: 'Ejecuciones Exitosas', fmt: v => v, best: 'max' },
     ];
 
     const tbody = document.getElementById('tableBody');
@@ -443,14 +443,14 @@ function renderComparisonTable(data) {
     });
 }
 
-// ── Individual Runs ──
+// ── Ejecuciones Individuales ──
 function renderRunsGrid(data, filters = {}) {
     const grid = document.getElementById('runsGrid');
     grid.innerHTML = '';
 
     let runs = data.raw_runs;
 
-    // Apply filters
+    // Aplicar filtros
     if (filters.strategy && filters.strategy !== 'all') {
         runs = runs.filter(r => r.strategy === filters.strategy);
     }
@@ -462,7 +462,7 @@ function renderRunsGrid(data, filters = {}) {
     }
 
     if (runs.length === 0) {
-        grid.innerHTML = '<div class="empty-state"><p>No runs match the current filters.</p></div>';
+        grid.innerHTML = '<div class="empty-state"><p>Ninguna ejecución coincide con los filtros actuales.</p></div>';
         return;
     }
 
@@ -478,14 +478,14 @@ function renderRunsGrid(data, filters = {}) {
                 <span class="run-strategy">${run.strategy_name}</span>
                 <span class="run-status ${statusClass}">${statusText}</span>
             </div>
-            <div class="run-word">Word: "${run.word}" · Iteration ${run.iteration}</div>
+            <div class="run-word">Palabra: "${run.word}" · Iteración ${run.iteration}</div>
             <div class="run-metrics">
                 <div class="run-metric">
-                    <span class="run-metric-label">Latency</span>
+                    <span class="run-metric-label">Latencia</span>
                     <span class="run-metric-value">${run.duration.toFixed(1)}s</span>
                 </div>
                 <div class="run-metric">
-                    <span class="run-metric-label">Thought</span>
+                    <span class="run-metric-label">Pensamiento</span>
                     <span class="run-metric-value">${run.thought_tokens.toLocaleString()}</span>
                 </div>
                 <div class="run-metric">
@@ -493,7 +493,7 @@ function renderRunsGrid(data, filters = {}) {
                     <span class="run-metric-value">${run.total_tokens.toLocaleString()}</span>
                 </div>
                 <div class="run-metric">
-                    <span class="run-metric-label">Cost</span>
+                    <span class="run-metric-label">Costo</span>
                     <span class="run-metric-value">$${run.cost.toFixed(5)}</span>
                 </div>
             </div>
@@ -503,14 +503,14 @@ function renderRunsGrid(data, filters = {}) {
     });
 }
 
-// ── Cascade Results ──
+// ── Resultados de la Cascada ──
 function renderCascadeResults(data) {
     const cascade = data.summaries.cascade;
     const mono = data.summaries.monolithic || data.summaries.monolithic_schema;
 
     if (!cascade || !mono) return;
 
-    // Thought token reduction
+    // Reducción de tokens de pensamiento
     if (mono.avg_thought_tokens > 0) {
         const reduction = ((1 - cascade.avg_thought_tokens / mono.avg_thought_tokens) * 100).toFixed(0);
         const el = document.getElementById('cascadeThoughtReduction');
@@ -518,7 +518,7 @@ function renderCascadeResults(data) {
         el.style.color = reduction > 0 ? 'var(--accent-emerald)' : 'var(--accent-rose)';
     }
 
-    // Latency difference
+    // Diferencia de latencia
     if (mono.avg_duration > 0) {
         const diff = ((cascade.avg_duration / mono.avg_duration - 1) * 100).toFixed(0);
         const el = document.getElementById('cascadeLatencyDiff');
@@ -527,7 +527,7 @@ function renderCascadeResults(data) {
         el.style.color = diff < 0 ? 'var(--accent-emerald)' : 'var(--accent-amber)';
     }
 
-    // Cost difference
+    // Diferencia de costo
     if (mono.avg_cost > 0) {
         const diff = ((cascade.avg_cost / mono.avg_cost - 1) * 100).toFixed(0);
         const el = document.getElementById('cascadeCostDiff');
@@ -536,18 +536,18 @@ function renderCascadeResults(data) {
         el.style.color = diff < 0 ? 'var(--accent-emerald)' : 'var(--accent-amber)';
     }
 
-    // Failure rate
+    // Tasa de fallos
     document.getElementById('cascadeFailRate').textContent =
         `${((cascade.failure_rate || 0) * 100).toFixed(0)}%`;
 }
 
-// ── Filters ──
+// ── Filtros ──
 function setupFilters(data) {
     const strategySelect = document.getElementById('filterStrategy');
     const wordSelect = document.getElementById('filterWord');
     const failedCheckbox = document.getElementById('filterFailed');
 
-    // Populate strategy options
+    // Poblar opciones de estrategia
     const strategies = [...new Set(data.raw_runs.map(r => r.strategy))];
     strategies.forEach(s => {
         const opt = document.createElement('option');
@@ -556,7 +556,7 @@ function setupFilters(data) {
         strategySelect.appendChild(opt);
     });
 
-    // Populate word options
+    // Poblar opciones de palabra
     const words = [...new Set(data.raw_runs.map(r => r.word))];
     words.forEach(w => {
         const opt = document.createElement('option');
@@ -565,7 +565,7 @@ function setupFilters(data) {
         wordSelect.appendChild(opt);
     });
 
-    // Event listeners
+    // Listeners de eventos
     const applyFilters = () => {
         renderRunsGrid(data, {
             strategy: strategySelect.value,
