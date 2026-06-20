@@ -1,10 +1,10 @@
 import json
-import re
 import time
 from datetime import datetime
 
 from google.genai import types
 
+from ..output_validation import parse_payload
 from ..utils import FLASH_MODEL, MetricsTracker, generate_content_sync
 from prompts import (
     CASCADE_STAGE1_SYSTEM,
@@ -75,13 +75,13 @@ SPOKENFI_TRANSFORMATION_SCHEMA = types.Schema(
 )
 
 
-def _parse_structured_response(response):
+def _parse_structured_response(stage_name, response):
     if response["parsed"] is not None:
         return response["parsed"]
-    text = response["text"].strip()
-    text = re.sub(r"^```(?:json)?\s*", "", text)
-    text = re.sub(r"\s*```$", "", text)
-    return json.loads(text)
+    data, errors = parse_payload(response["text"])
+    if errors:
+        raise ValueError(f"{stage_name}: {errors[0]}")
+    return data
 
 
 async def _run_stage(
@@ -107,7 +107,7 @@ async def _run_stage(
         timeout=timeout,
     )
     await metrics.record(stage_name, response["usage"], response["duration"], response["ttft"])
-    return _parse_structured_response(response)
+    return _parse_structured_response(stage_name, response)
 
 
 async def run_pipeline(word="hana", salt=None, timeout=120):
