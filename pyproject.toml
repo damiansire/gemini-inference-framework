@@ -1,0 +1,27 @@
+[project]
+name = "gemini-inference-framework"
+version = "0.1.0"
+description = "Framework de benchmarking e inferencia para estrategias multi-etapa sobre Gemini."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+[tool.pytest.ini_options]
+# Orden aleatorio fuerza independencia entre tests; los timeouts se arreglan
+# arreglando el test lento, nunca subiendo el limite.
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+# Bugbear (B), comprehensions (C4), pycodestyle (E/W), pyflakes (F),
+# flake8-bandit (S, seguridad: relevante por las API keys de Gemini),
+# isort (I), simplify (SIM), pyupgrade (UP).
+extend-select = ["B", "C4", "E", "F", "S", "I", "SIM", "UP", "W"]
+
+[tool.ruff.lint.per-file-ignores]
+# En tests se permiten asserts (S101) y datos "hardcodeados" de fixtures.
+"tests/**" = ["S101", "S105", "S106"]
