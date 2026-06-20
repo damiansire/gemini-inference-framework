@@ -149,7 +149,9 @@ def validate_dictionary_output(payload, expected_levels=FULL_LEVELS):
         if any(marker in lower_definition for marker in MORPHOLOGICAL_FORM_MARKERS):
             errors.append(f"{prefix} describes a grammatical form instead of a headword sense")
         if any(marker in lower_definiendum for marker in MORPHOLOGICAL_FORM_MARKERS):
-            errors.append(f"{prefix}.definiendum describes a grammatical form instead of a headword sense")
+            errors.append(
+                f"{prefix}.definiendum describes a grammatical form instead of a headword sense"
+            )
 
         normalized.append(
             {
