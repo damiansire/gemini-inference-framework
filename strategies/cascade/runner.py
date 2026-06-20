@@ -6,6 +6,7 @@ from datetime import datetime
 from google.genai import types
 
 from ..output_validation import parse_payload
+from ..stage_assembly import assemble_examples, build_spoken_map
 from ..utils import FLASH_MODEL, MetricsTracker, generate_content_sync
 from prompts import (
     CASCADE_STAGE1_SYSTEM,
@@ -184,29 +185,14 @@ async def run_cascade(word: str = "hana", salt: str = None, timeout: float = 120
                 timeout=stage3_timeout,
                 metrics=metrics,
             )
-            spoken_map = {
-                example["level"].lower(): example.get("spokenFi")
-                for example in spoken_data["spoken_examples"]
-            }
+            spoken_map = build_spoken_map(spoken_data["spoken_examples"])
         except Exception as exc:
             print(
                 f"      [{datetime.now().strftime('%H:%M:%S')}] [Cascade] Stage 3 fallback for meaning {idx + 1}: {str(exc) or type(exc).__name__}"
             )
             spoken_map = {}
 
-        examples = []
-        for example in cefr_data["examples"]:
-            level = example["level"].lower()
-            spoken = spoken_map.get(level)
-            if isinstance(spoken, str) and spoken.strip() == example["sourceFi"].strip():
-                spoken = None
-            examples.append(
-                {
-                    "sourceFi": example["sourceFi"],
-                    "spokenFi": spoken,
-                    "level": level,
-                }
-            )
+        examples = assemble_examples(cefr_data["examples"], spoken_map)
 
         return {
             "englishDefinition": definition,

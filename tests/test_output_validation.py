@@ -14,6 +14,7 @@ from strategies.output_validation import (
     parse_payload,
     validate_dictionary_output,
 )
+from strategies.stage_assembly import assemble_examples, build_spoken_map
 
 
 def _example(level, source_fi="esimerkki", **extra):
@@ -276,3 +277,81 @@ def test_failure_returns_no_normalized_payload():
     result = validate_dictionary_output({"meanings": [_meaning(englishDefinition="")]})
     assert result["ok"] is False
     assert result["normalized"] is None
+
+
+# --------------------------------------------------------------------------- #
+# Ensamblado multi-stage (cascade/pipeline): build_spoken_map + assemble_examples
+#
+# cascade/pipeline parsean y transforman salida del modelo. Su logica de
+# ensamblado (merge por level, regla spoken==sourceFi->None, fallback con
+# spoken_map vacio) nunca se ejercitaba. Estos tests alimentan stage-output
+# malformado/duplicado/incompleto al ensamblador y afirman el comportamiento.
+# --------------------------------------------------------------------------- #
+
+
+def test_build_spoken_map_happy_path_lowercases_level():
+    spoken = [{"level": "A1", "spokenFi": "moi"}, {"level": "b1", "spokenFi": "tuus"}]
+    assert build_spoken_map(spoken) == {"a1": "moi", "b1": "tuus"}
+
+
+def test_build_spoken_map_duplicate_level_last_wins():
+    spoken = [{"level": "a1", "spokenFi": "primero"}, {"level": "a1", "spokenFi": "ultimo"}]
+    assert build_spoken_map(spoken) == {"a1": "ultimo"}
+
+
+def test_build_spoken_map_skips_entry_without_level():
+    # Stage 3 malformado: una entrada sin 'level' no debe romper el ensamblado.
+    spoken = [{"spokenFi": "huerfano"}, {"level": "a2", "spokenFi": "ok"}]
+    assert build_spoken_map(spoken) == {"a2": "ok"}
+
+
+def test_build_spoken_map_skips_entry_with_blank_level():
+    spoken = [{"level": "  ", "spokenFi": "x"}, {"level": "a1", "spokenFi": "ok"}]
+    assert build_spoken_map(spoken) == {"a1": "ok"}
+
+
+def test_build_spoken_map_preserves_missing_spoken_as_none():
+    # spokenFi ausente (nullable en el schema) se mapea a None, no rompe.
+    spoken = [{"level": "a1"}]
+    assert build_spoken_map(spoken) == {"a1": None}
+
+
+def test_assemble_examples_merges_spoken_by_level():
+    cefr = [
+        {"sourceFi": "Koira juoksee.", "level": "A1"},
+        {"sourceFi": "Hana vuotaa.", "level": "b1"},
+    ]
+    spoken_map = {"a1": "Koira juoksee.", "b1": "Hana vuotaa puhekielessa."}
+    result = assemble_examples(cefr, spoken_map)
+    # a1: spoken == sourceFi -> se anula a None.
+    assert result[0] == {"sourceFi": "Koira juoksee.", "spokenFi": None, "level": "a1"}
+    # b1: spoken distinto -> se conserva; level normalizado a lower.
+    assert result[1] == {
+        "sourceFi": "Hana vuotaa.",
+        "spokenFi": "Hana vuotaa puhekielessa.",
+        "level": "b1",
+    }
+
+
+def test_assemble_examples_level_missing_from_spoken_map_is_none():
+    # Stage 3 incompleto: falta el level -> spokenFi None, no KeyError.
+    cefr = [{"sourceFi": "Esimerkki.", "level": "c2"}]
+    result = assemble_examples(cefr, {})
+    assert result == [{"sourceFi": "Esimerkki.", "spokenFi": None, "level": "c2"}]
+
+
+def test_assemble_examples_fallback_empty_map_keeps_all_examples():
+    # Rama de fallback (except -> spoken_map={}): todos los ejemplos sobreviven
+    # con spokenFi=None, ninguno se pierde.
+    cefr = [{"sourceFi": s, "level": lvl} for lvl, s in zip(FULL_LEVELS, "abcdef", strict=True)]
+    result = assemble_examples(cefr, {})
+    assert len(result) == len(FULL_LEVELS)
+    assert all(item["spokenFi"] is None for item in result)
+    assert [item["level"] for item in result] == list(FULL_LEVELS)
+
+
+def test_assemble_examples_spoken_equal_after_strip_is_nulled():
+    # La regla compara tras strip: whitespace alrededor no debe "salvar" el spoken.
+    cefr = [{"sourceFi": "Talo on iso.", "level": "a1"}]
+    result = assemble_examples(cefr, {"a1": "  Talo on iso.  "})
+    assert result[0]["spokenFi"] is None
