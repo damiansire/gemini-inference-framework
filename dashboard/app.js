@@ -27,9 +27,23 @@ let benchmarkData = null;
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', async () => {
+    // A live run writes benchmark_data.json; reports recovered from logs via
+    // salvage.py write salvaged_results.json. Try the live snapshot first, then
+    // fall back to the salvaged dataset committed in the repo.
+    const DATA_SOURCES = [
+        '../benchmark_results/benchmark_data.json',
+        '../benchmark_results/salvaged_results.json',
+    ];
     try {
-        const resp = await fetch('../benchmark_results/benchmark_data.json');
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        let resp = null;
+        for (const url of DATA_SOURCES) {
+            const attempt = await fetch(url);
+            if (attempt.ok) {
+                resp = attempt;
+                break;
+            }
+        }
+        if (!resp) throw new Error('No benchmark dataset found');
         benchmarkData = await resp.json();
         renderDashboard(benchmarkData);
     } catch (err) {
@@ -72,14 +86,21 @@ function renderDashboard(data) {
 // ── Hero Stats ──
 function renderHeroStats(data) {
     const meta = data.metadata;
-    document.getElementById('statStrategies').textContent = meta.strategies_tested.length;
+    // Live snapshots expose `strategies_tested`; salvaged datasets use `strategies`.
+    const strategies = meta.strategies_tested || meta.strategies || Object.keys(data.summaries || {});
+    document.getElementById('statStrategies').textContent = strategies.length;
     document.getElementById('statWords').textContent = meta.words.length;
     document.getElementById('statRuns').textContent = data.raw_runs.length;
 
-    const ts = new Date(meta.timestamp);
-    document.getElementById('statTimestamp').textContent = ts.toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', year: 'numeric'
-    });
+    // Salvaged datasets have no timestamp; fall back to a neutral label.
+    if (meta.timestamp) {
+        const ts = new Date(meta.timestamp);
+        document.getElementById('statTimestamp').textContent = ts.toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric'
+        });
+    } else {
+        document.getElementById('statTimestamp').textContent = 'salvaged';
+    }
 }
 
 // ── Claims Verification ──
