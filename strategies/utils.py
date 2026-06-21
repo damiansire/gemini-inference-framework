@@ -14,7 +14,7 @@ COST_RATES = {
 
 
 class MetricsTracker:
-    """Thread-safe metrics accumulator for multi-stage strategies."""
+    """Coroutine-safe (single event loop) metrics accumulator for multi-stage strategies."""
 
     def __init__(self):
         self._lock = asyncio.Lock()
