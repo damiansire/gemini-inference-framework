@@ -32,7 +32,7 @@ def salvage():
         "Lazy Optimized (A1-B1)": "lazy_optimized",
         "Pipeline (Multi-stage)": "pipeline",
         "Structured Cascade": "cascade",
-        "Thinking Budget (4096)": "thinking_budget",
+        "Thinking Budget (LOW)": "thinking_budget",
         "Pro Model": "pro_model"
     }
 

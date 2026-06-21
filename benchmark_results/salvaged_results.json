@@ -23,7 +23,7 @@
   "raw_runs": [
     {
       "strategy": "thinking_budget",
-      "strategy_name": "Thinking Budget (4096)",
+      "strategy_name": "Thinking Budget (LOW)",
       "word": "hana",
       "iteration": 2,
       "salt": "b72b978f",
@@ -53,7 +53,7 @@
     },
     {
       "strategy": "thinking_budget",
-      "strategy_name": "Thinking Budget (4096)",
+      "strategy_name": "Thinking Budget (LOW)",
       "word": "juosta",
       "iteration": 3,
       "salt": "13d78d2d",
@@ -293,7 +293,7 @@
     },
     {
       "strategy": "thinking_budget",
-      "strategy_name": "Thinking Budget (4096)",
+      "strategy_name": "Thinking Budget (LOW)",
       "word": "juosta",
       "iteration": 2,
       "salt": "c003cac8",
@@ -353,7 +353,7 @@
     },
     {
       "strategy": "thinking_budget",
-      "strategy_name": "Thinking Budget (4096)",
+      "strategy_name": "Thinking Budget (LOW)",
       "word": "hana",
       "iteration": 3,
       "salt": "e4fe858a",
@@ -653,7 +653,7 @@
     },
     {
       "strategy": "thinking_budget",
-      "strategy_name": "Thinking Budget (4096)",
+      "strategy_name": "Thinking Budget (LOW)",
       "word": "vanha",
       "iteration": 1,
       "salt": "de2be289",
@@ -953,7 +953,7 @@
     },
     {
       "strategy": "thinking_budget",
-      "strategy_name": "Thinking Budget (4096)",
+      "strategy_name": "Thinking Budget (LOW)",
       "word": "silta",
       "iteration": 2,
       "salt": "c2bd0695",
@@ -968,7 +968,7 @@
     },
     {
       "strategy": "thinking_budget",
-      "strategy_name": "Thinking Budget (4096)",
+      "strategy_name": "Thinking Budget (LOW)",
       "word": "vanha",
       "iteration": 2,
       "salt": "0b01b052",
@@ -1043,7 +1043,7 @@
     },
     {
       "strategy": "thinking_budget",
-      "strategy_name": "Thinking Budget (4096)",
+      "strategy_name": "Thinking Budget (LOW)",
       "word": "juosta",
       "iteration": 1,
       "salt": "049bcb1b",
@@ -1193,7 +1193,7 @@
     },
     {
       "strategy": "thinking_budget",
-      "strategy_name": "Thinking Budget (4096)",
+      "strategy_name": "Thinking Budget (LOW)",
       "word": "kuusi",
       "iteration": 2,
       "salt": "b92124ae",
@@ -1223,7 +1223,7 @@
     },
     {
       "strategy": "thinking_budget",
-      "strategy_name": "Thinking Budget (4096)",
+      "strategy_name": "Thinking Budget (LOW)",
       "word": "hana",
       "iteration": 1,
       "salt": "f19fba2e",
@@ -1253,7 +1253,7 @@
     },
     {
       "strategy": "thinking_budget",
-      "strategy_name": "Thinking Budget (4096)",
+      "strategy_name": "Thinking Budget (LOW)",
       "word": "vanha",
       "iteration": 3,
       "salt": "713311d5",
@@ -1298,7 +1298,7 @@
     },
     {
       "strategy": "thinking_budget",
-      "strategy_name": "Thinking Budget (4096)",
+      "strategy_name": "Thinking Budget (LOW)",
       "word": "silta",
       "iteration": 1,
       "salt": "32088f50",
@@ -1313,7 +1313,7 @@
     },
     {
       "strategy": "thinking_budget",
-      "strategy_name": "Thinking Budget (4096)",
+      "strategy_name": "Thinking Budget (LOW)",
       "word": "kuusi",
       "iteration": 3,
       "salt": "ae6c1069",
@@ -1613,7 +1613,7 @@
     },
     {
       "strategy": "thinking_budget",
-      "strategy_name": "Thinking Budget (4096)",
+      "strategy_name": "Thinking Budget (LOW)",
       "word": "silta",
       "iteration": 3,
       "salt": "53ba5af2",
@@ -1658,7 +1658,7 @@
     },
     {
       "strategy": "thinking_budget",
-      "strategy_name": "Thinking Budget (4096)",
+      "strategy_name": "Thinking Budget (LOW)",
       "word": "kuusi",
       "iteration": 1,
       "salt": "c7a63af0",
@@ -1962,7 +1962,7 @@
       "valid_output_rate": 1.0
     },
     "thinking_budget": {
-      "name": "Thinking Budget (4096)",
+      "name": "Thinking Budget (LOW)",
       "description": "Monolithic baseline with an explicit thinking budget cap",
       "avg_duration": 8.207142857142857,
       "min_duration": 5.59,

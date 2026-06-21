@@ -127,9 +127,9 @@ STRATEGIES = {
         "expected_levels": FULL_LEVELS,
     },
     "thinking_budget": {
-        "name": "Thinking Budget (4096)",
+        "name": "Thinking Budget (LOW)",
         "runner": run_thinking_budget,
-        "description": "Monolithic baseline with an explicit thinking budget cap",
+        "description": "Monolithic baseline with thinking_level=LOW as a thinking cap",
         "expected_levels": FULL_LEVELS,
     },
     "pro_model": {

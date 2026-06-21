@@ -8,7 +8,7 @@ Models benchmarked: gemini-3-flash-preview, gemini-3.1-pro-preview
 
 ## Executive Summary
 
-| Metric | Monolithic (No Schema) | Monolithic (Strict Schema) | Optimized Monolithic | Lazy Optimized (A1-B1) | Pipeline (Multi-stage) | Structured Cascade | Thinking Budget (4096) | Pro Model |
+| Metric | Monolithic (No Schema) | Monolithic (Strict Schema) | Optimized Monolithic | Lazy Optimized (A1-B1) | Pipeline (Multi-stage) | Structured Cascade | Thinking Budget (LOW) | Pro Model |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Avg Latency (E2E)** | 21.98s | 28.88s | 20.70s | 16.14s | 152.89s | 17.23s | 8.21s | 54.67s |
 | **Time to 1st Token (TTFT)** | 15.70s | 0.00s | 14.46s | 13.37s | 0.00s | 0.00s | 2.12s | 42.17s |
@@ -27,7 +27,7 @@ The validator checks JSON parseability, root shape, required keys, CEFR level co
 
 - Lazy Optimized is the fastest partial-output strategy at 16.14s average latency.
 - The fastest fully valid strategy is Lazy Optimized (A1-B1) at 16.14s average latency.
-- Outside the lazy variant, the lowest-latency approach is Thinking Budget (4096).
+- Outside the lazy variant, the lowest-latency approach is Thinking Budget (LOW).
 - Schema enforcement changed average thought-token usage by +52.9% versus the monolithic baseline.
 
 ## Failure Breakdown
@@ -38,5 +38,5 @@ The validator checks JSON parseability, root shape, required keys, CEFR level co
 - Lazy Optimized (A1-B1): 15/15 valid runs, 0 validation failures, 0 API failures.
 - Pipeline (Multi-stage): 14/15 valid runs, 0 validation failures, 1 API failures.
 - Structured Cascade: 15/15 valid runs, 0 validation failures, 0 API failures.
-- Thinking Budget (4096): 14/15 valid runs, 1 validation failures, 0 API failures.
+- Thinking Budget (LOW): 14/15 valid runs, 1 validation failures, 0 API failures.
 - Pro Model: 13/15 valid runs, 1 validation failures, 1 API failures.
