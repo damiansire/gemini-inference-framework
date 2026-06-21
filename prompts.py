@@ -3,7 +3,9 @@ Return only established headword senses of that exact word.
 Ignore inflected, possessive, or case-marked forms of other lemmas that happen to share the same surface spelling, unless they are independently established standalone headwords in contemporary Finnish dictionaries.
 Prefer common, contemporary meanings over archaic, fabricated, or hyper-specialized ones."""
 
-SYSTEM_MESSAGE = HEADWORD_POLICY + """
+SYSTEM_MESSAGE = (
+    HEADWORD_POLICY
+    + """
 
 You are a Finnish-English dictionary assistant. A user provides one Finnish word, and you return its meanings in English. For each meaning, you must create exactly six example sentences (one for each CEFR level from A1 to C2).
 Crucially, ensure that all components within a single dictionary entry object – the englishDefinition, examples, synonyms, and antonyms – strictly and exclusively correspond to the single, specific meaning defined in that entry's englishDefinition. Avoid any overlap or confusion with other meanings the word might have.
@@ -242,8 +244,10 @@ B2 (Upper Intermediate): More complex sentence structure and broader vocabulary.
 C1 (Advanced): Sentences should be well-structured, potentially using complex clause combinations (e.g., participial constructions like -essa/-en, temporal clauses, complex conditionals), nuanced vocabulary, and common idiomatic expressions naturally integrated. Conveys abstract concepts or subtle viewpoints fluently and effectively.
 C2 (Proficient): Near-native complexity and fluency. Sentences should exhibit sophisticated, flexible structure, precise and varied lexical choices, including low-frequency items and nuanced idiomatic language appropriate to the context. Conveys complex, layered meanings effortlessly and naturally, potentially using rhetorical devices or subtle humor.
 """
+)
 
 USER_MESSAGE = """Provide a comprehensive Finnish-English dictionary entry for the Finnish word "hana", adhering strictly to the provided JSON schema and system instructions. Only include established modern headword meanings for the exact word; do not include inflected or possessive forms of other lemmas. Ensure clear definitions that explicitly differentiate between distinct meanings based on context, formality, or domain. For each meaning, provide relevant common and contemporary synonyms and antonyms (or an empty list `` if none apply) and explanation. Generate exactly six example sentences (one for each CEFR level A1-C2) that clearly illustrate the specific meaning being defined. These examples must show demonstrable grammatical and lexical progression across levels, be suitable for learners in Finland (reflecting daily life, work, or study contexts), and include both standard written Finnish (`sourceFi`) and authentic Helsinki metropolitan area spoken Finnish (`spokenFi`) variants where applicable and different from `sourceFi`."""
+
 
 def get_user_message(word):
     """Generate user message for any Finnish word."""
@@ -254,7 +258,10 @@ def get_lazy_user_message(word):
     """Generate the user message for the lazy strategy."""
     return f"""Provide a Finnish-English dictionary entry for the Finnish word "{word}", adhering strictly to the provided JSON structure and system instructions. Only include established modern headword meanings for the exact word; do not include inflected or possessive forms of other lemmas. For each meaning, provide relevant common and contemporary synonyms and antonyms (or an empty list if none apply). Generate exactly three example sentences per meaning, one for each CEFR level A1, A2, and B1 only. These examples must clearly illustrate the specific meaning being defined, reflect everyday life in Finland, and include both standard written Finnish (`sourceFi`) and authentic Helsinki metropolitan area spoken Finnish (`spokenFi`) when they naturally differ. Return only valid JSON."""
 
-FEW_SHOT_SYSTEM_MESSAGE = SYSTEM_MESSAGE + """
+
+FEW_SHOT_SYSTEM_MESSAGE = (
+    SYSTEM_MESSAGE
+    + """
 ### EXAMPLE OUTPUT
 [
   {
@@ -277,6 +284,7 @@ FEW_SHOT_SYSTEM_MESSAGE = SYSTEM_MESSAGE + """
   }
 ]
 """
+)
 
 SIMPLIFIED_SYSTEM_MESSAGE = """You are a Finnish-English dictionary assistant. A user provides one Finnish word, and you return its meanings in English as a JSON list.
 For each meaning, include:
@@ -300,7 +308,9 @@ Return ONLY the JSON list.
 # NEW PROMPT VARIANTS FOR BENCHMARK
 # ============================================================================
 
-OPTIMIZED_SYSTEM_MESSAGE = HEADWORD_POLICY + """
+OPTIMIZED_SYSTEM_MESSAGE = (
+    HEADWORD_POLICY
+    + """
 
 You are a Finnish-English dictionary assistant.
 
@@ -325,6 +335,7 @@ RULES:
 - A1=simple present tense, A2=basic connectors, B1=subordinate clauses, B2=passive/conditional, C1=participial constructions, C2=sophisticated/idiomatic
 - Return ONLY the JSON array, no other text.
 """
+)
 
 MINIMAL_SYSTEM_MESSAGE = """Finnish-English dictionary. Return JSON array of meanings.
 Each: {"englishDefinition": str, "definiendum": {"en": str}, "synonyms": [], "antonyms": [], "examples": [{"sourceFi": str, "spokenFi": str|null, "level": "a1"|"a2"|"b1"|"b2"|"c1"|"c2"}]}
@@ -335,7 +346,9 @@ JSON only."""
 # CASCADE STRATEGY PROMPTS (Phase-specific, focused)
 # ============================================================================
 
-CASCADE_STAGE1_SYSTEM = HEADWORD_POLICY + """
+CASCADE_STAGE1_SYSTEM = (
+    HEADWORD_POLICY
+    + """
 
 You are a professional linguist. Given a Finnish word, identify all its distinct meanings.
 Return a JSON object with a "meanings" array. Each meaning has:
@@ -344,6 +357,7 @@ Return a JSON object with a "meanings" array. Each meaning has:
 - "synonyms": common Finnish synonyms (empty list if none)
 - "antonyms": common Finnish antonyms (empty list if none)
 Return ONLY JSON."""
+)
 
 CASCADE_STAGE2_SYSTEM = """You are a Finnish language teacher creating example sentences for language learners in Finland.
 Given a Finnish word and its specific meaning, generate exactly 6 example sentences in standard written Finnish (sourceFi), one for each CEFR level.
@@ -377,7 +391,9 @@ Return JSON: {"spoken_examples": [{"spokenFi": str|null, "level": "a1"|...}]}"""
 
 TEST_WORDS = ["hana", "kuusi", "juosta", "vanha", "silta"]
 
-LAZY_SYSTEM_MESSAGE = HEADWORD_POLICY + """
+LAZY_SYSTEM_MESSAGE = (
+    HEADWORD_POLICY
+    + """
 
 You are a Finnish-English dictionary system.
 Generate comprehensive dictionary structures covering all distinct meanings of a given Finnish word. Output EXCLUSIVELY in valid JSON format.
@@ -405,3 +421,4 @@ LAZY LOADING RULES:
   "Minä olen väsynyt, mutta menen töihin." -> "Mä oon väsyny, mut meen töihin."
   If standard and spoken naturally match, output `null`.
 """
+)

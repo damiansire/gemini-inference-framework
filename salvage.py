@@ -10,17 +10,22 @@ def salvage():
 
     results_metadata = {
         "metadata": {
-            "words": ['hana', 'kuusi', 'juosta', 'vanha', 'silta'],
+            "words": ["hana", "kuusi", "juosta", "vanha", "silta"],
             "strategies": [
-                'monolithic', 'monolithic_schema', 'optimized_monolithic',
-                'lazy_optimized', 'pipeline', 'cascade', 'thinking_budget',
-                'pro_model',
+                "monolithic",
+                "monolithic_schema",
+                "optimized_monolithic",
+                "lazy_optimized",
+                "pipeline",
+                "cascade",
+                "thinking_budget",
+                "pro_model",
             ],
             "iterations": 3,
             "timeout": 180,
         },
         "raw_runs": [],
-        "summaries": {}
+        "summaries": {},
     }
 
     # regex to match each block:
@@ -44,7 +49,7 @@ def salvage():
         "Pipeline (Multi-stage)": "pipeline",
         "Structured Cascade": "cascade",
         "Thinking Budget (LOW)": "thinking_budget",
-        "Pro Model": "pro_model"
+        "Pro Model": "pro_model",
     }
 
     strategy_results = {s: [] for s in results_metadata["metadata"]["strategies"]}
@@ -53,8 +58,17 @@ def salvage():
     for match in block_pattern.finditer(content):
         matched_blocks += 1
         (
-            strat_display, word, it, salt, status, dur, ttft_str,
-            thought_str, total_str, api_s, output_v,
+            strat_display,
+            word,
+            it,
+            salt,
+            status,
+            dur,
+            ttft_str,
+            thought_str,
+            total_str,
+            api_s,
+            output_v,
         ) = match.groups()
         strat_key = strategies_map.get(strat_display.strip(), strat_display.strip())
 
@@ -72,7 +86,7 @@ def salvage():
         # need a measured split.
         est_out = tho + 800
         if est_out > tot:
-            est_out = tot * 0.3 # Fallback safely
+            est_out = tot * 0.3  # Fallback safely
         est_in = tot - est_out
 
         if strat_key == "pro_model":
@@ -93,7 +107,7 @@ def salvage():
             "api_success": api_s == "True",
             "output_valid": output_v == "True",
             "success": status == "VALID",
-            "cost": cost_val
+            "cost": cost_val,
         }
 
         results_metadata["raw_runs"].append(run_record)
@@ -116,7 +130,7 @@ def salvage():
             results_metadata["summaries"][key] = {
                 "name": STRATEGIES[key]["name"],
                 "description": STRATEGIES.get(key, {}).get("description", ""),
-                **summary
+                **summary,
             }
 
     with open("benchmark_results/salvaged_results.json", "w", encoding="utf-8") as handle:
@@ -124,6 +138,7 @@ def salvage():
 
     _generate_benchmark_report(results_metadata)
     print("SALVAGE SUCCESSFUL: Reports generated from log file.")
+
 
 if __name__ == "__main__":
     salvage()

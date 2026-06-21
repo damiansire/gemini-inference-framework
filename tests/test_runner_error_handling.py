@@ -39,12 +39,8 @@ def _patch_stream(monkeypatch, side_effect):
     # Los runners importan la funcion por nombre desde ..utils, asi que hay que
     # parchear el binding en cada modulo de runner ademas del de utils.
     monkeypatch.setattr(utils, "generate_content_stream", fake_stream)
-    monkeypatch.setattr(
-        "strategies.monolithic.runner.generate_content_stream", fake_stream
-    )
-    monkeypatch.setattr(
-        "strategies.thinking_budget.runner.generate_content_stream", fake_stream
-    )
+    monkeypatch.setattr("strategies.monolithic.runner.generate_content_stream", fake_stream)
+    monkeypatch.setattr("strategies.thinking_budget.runner.generate_content_stream", fake_stream)
 
 
 # --- Errores ESPERADOS: se tragan y se reportan como run fallido --------------

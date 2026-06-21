@@ -67,7 +67,7 @@ def test_parse_payload_strips_json_code_fence():
 
 
 def test_parse_payload_strips_bare_code_fence():
-    assert parse_payload("```\n{\"a\": 1}\n```") == ({"a": 1}, [])
+    assert parse_payload('```\n{"a": 1}\n```') == ({"a": 1}, [])
 
 
 def test_parse_payload_unterminated_fence_is_invalid_json():

@@ -124,8 +124,7 @@ STRATEGIES = {
         "name": "Pipeline (Multi-stage)",
         "runner": run_pipeline_strategy,
         "description": (
-            "Sequential decomposition into extraction, CEFR generation, "
-            "and SpokenFi transformation"
+            "Sequential decomposition into extraction, CEFR generation, and SpokenFi transformation"
         ),
         "expected_levels": FULL_LEVELS,
     },
@@ -316,9 +315,7 @@ def _generate_benchmark_report(data):
     summaries = data["summaries"]
     strategy_keys = list(summaries.keys())
 
-    header = "| Metric |" + "".join(
-        f" {summaries[key]['name']} |" for key in strategy_keys
-    )
+    header = "| Metric |" + "".join(f" {summaries[key]['name']} |" for key in strategy_keys)
     divider = "| :--- |" + "".join(" :--- |" for _ in strategy_keys)
 
     rows = []
@@ -409,7 +406,7 @@ def _generate_benchmark_report(data):
             delta = ((schema["avg_thought_tokens"] / baseline["avg_thought_tokens"]) - 1) * 100
             report.append(
                 f"- Schema enforcement changed average thought-token usage by "
-            f"{delta:+.1f}% versus the monolithic baseline."
+                f"{delta:+.1f}% versus the monolithic baseline."
             )
 
     report.extend(
@@ -469,7 +466,7 @@ def _generate_gde_submission(data):
             latency_delta = ((schema["avg_duration"] / baseline["avg_duration"]) - 1) * 100
             lines.append(
                 f"- API-level schema enforcement changed end-to-end latency by "
-            f"{latency_delta:+.1f}% versus the monolithic baseline."
+                f"{latency_delta:+.1f}% versus the monolithic baseline."
             )
 
     lines.extend(
@@ -506,8 +503,7 @@ def _generate_article_draft(data):
         "",
         "## Core point",
         "",
-        "The benchmark suggests that the production problem is not just "
-        "runaway reasoning.",
+        "The benchmark suggests that the production problem is not just runaway reasoning.",
         "It is the interaction between lexical ambiguity, rigid output "
         "contracts, and missing downstream validation.",
         "",
@@ -528,8 +524,7 @@ def _generate_article_draft(data):
             "- Multi-stage orchestration is only persuasive when the "
             "implementation is reproducible and each stage is independently "
             "validated.",
-            "- Data-specific claims should live next to the benchmark snapshot "
-            "that produced them.",
+            "- Data-specific claims should live next to the benchmark snapshot that produced them.",
         ]
     )
 
@@ -538,9 +533,7 @@ def _generate_article_draft(data):
 
 
 async def main():
-    parser = argparse.ArgumentParser(
-        description="Gemini latency benchmark with output validation"
-    )
+    parser = argparse.ArgumentParser(description="Gemini latency benchmark with output validation")
     parser.add_argument("--words", nargs="+", default=TEST_WORDS, help="Words to benchmark")
     parser.add_argument(
         "--iterations",
@@ -642,10 +635,10 @@ async def main():
             }
 
         result = _normalize_result(strategy_key, raw_result)
-        status = "VALID" if result["success"] else (
-            "TIMEOUT" if result.get("timed_out") else "FAILED"
+        status = (
+            "VALID" if result["success"] else ("TIMEOUT" if result.get("timed_out") else "FAILED")
         )
-        ttft_str = f"{result['ttft']:.2f}s" if result.get('ttft') is not None else "N/A"
+        ttft_str = f"{result['ttft']:.2f}s" if result.get("ttft") is not None else "N/A"
         print(
             f"  {status} | dur={result['duration']:.2f}s | ttft={ttft_str} | "
             f"thought={result['thought_tokens']:,} | total={result['total_tokens']:,} | "
