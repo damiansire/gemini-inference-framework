@@ -6,7 +6,7 @@
 
 # Gemini Reasoning Explosion — Empirical Benchmark & Mitigation Suite
 
-> **TL;DR:** A Finnish dictionary prompt causes `gemini-3-flash-preview` to consume **62k+ thought tokens** and take **4 minutes 19 seconds**. We built a benchmark of **120 controlled API calls** across **8 architectural strategies** and found that a **Structured Cascade** architecture reduces this to **17.2s with 100% reliability** — without changing the prompt content.
+> **TL;DR:** A Finnish dictionary prompt causes `gemini-3-flash-preview` to consume **62k+ thought tokens** and take **4 minutes 19 seconds**. We built a benchmark of **120 controlled API calls** across **8 architectural strategies** and found that a **Structured Cascade** architecture reduces this to **17.2s with 100% reliability** — keeping the same target task (the cascade rewrites the prompts into per-stage system messages rather than reusing the original prompt verbatim).
 
 ---
 
