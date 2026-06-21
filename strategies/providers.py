@@ -48,8 +48,7 @@ class GeminiProvider:
     antes; nunca se loguea ni se persiste.
     """
 
-    def __init__(self, *, model_hint: str | None = None):
-        self._model_hint = model_hint
+    def __init__(self):
         self._client: genai.Client | None = None
 
     def _get_client(self) -> genai.Client:

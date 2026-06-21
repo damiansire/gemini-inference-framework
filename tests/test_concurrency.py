@@ -7,15 +7,12 @@ tests afirman la propiedad inversa: con el ``asyncio.Semaphore`` compartido en
 ``utils`` (limite=K), el in-flight pico NUNCA supera K, ni siquiera bajo un
 caller concurrente W·M >> K.
 
-Tambien se cubre el retry con backoff (transitorio vs fatal y Retry-After).
-
 Se sigue el patron de la suite (``asyncio.run``, sin pytest-asyncio).
 """
 
 import asyncio
 
 import pytest
-from google.genai import errors as genai_errors
 
 from strategies import utils
 from strategies.cascade import runner as cascade_runner
@@ -162,86 +159,3 @@ def test_limite_distinto_se_respeta(monkeypatch):
         words=20, meanings=5, limit=limit, monkeypatch=monkeypatch
     )
     assert max_inflight <= limit
-
-
-# --- Retry / backoff ---------------------------------------------------------
-
-
-def _api_error(code):
-    return genai_errors.APIError(code, {"error": {"message": "boom"}})
-
-
-def test_retry_reintenta_transitorio_y_converge():
-    """Falla 2 veces con 429 y luego responde: with_retries debe converger."""
-    calls = {"n": 0}
-
-    async def factory():
-        calls["n"] += 1
-        if calls["n"] < 3:
-            raise _api_error(429)
-        return "ok"
-
-    async def fake_sleep(_):
-        return None
-
-    result = asyncio.run(utils.with_retries(factory, sleep=fake_sleep))
-    assert result == "ok"
-    assert calls["n"] == 3
-
-
-def test_retry_no_reintenta_fatal():
-    """Un 400 (config/request) es fatal: no se reintenta, propaga al toque."""
-    calls = {"n": 0}
-
-    async def factory():
-        calls["n"] += 1
-        raise _api_error(400)
-
-    async def fake_sleep(_):  # pragma: no cover - no deberia llamarse
-        raise AssertionError("no debe dormir ante un fatal")
-
-    with pytest.raises(genai_errors.APIError):
-        asyncio.run(utils.with_retries(factory, sleep=fake_sleep))
-    assert calls["n"] == 1
-
-
-def test_retry_agota_intentos():
-    """Transitorio persistente: agota max_attempts y propaga el ultimo error."""
-    calls = {"n": 0}
-
-    async def factory():
-        calls["n"] += 1
-        raise _api_error(503)
-
-    async def fake_sleep(_):
-        return None
-
-    with pytest.raises(genai_errors.APIError):
-        asyncio.run(utils.with_retries(factory, max_attempts=3, sleep=fake_sleep))
-    assert calls["n"] == 3
-
-
-def test_retry_respeta_retry_after():
-    """Si el 429 trae Retry-After, with_retries duerme ese tiempo exacto."""
-    slept = []
-
-    class _Resp:
-        headers = {"Retry-After": "7"}
-
-    err = _api_error(429)
-    err.response = _Resp()
-
-    calls = {"n": 0}
-
-    async def factory():
-        calls["n"] += 1
-        if calls["n"] == 1:
-            raise err
-        return "ok"
-
-    async def fake_sleep(seconds):
-        slept.append(seconds)
-
-    result = asyncio.run(utils.with_retries(factory, sleep=fake_sleep))
-    assert result == "ok"
-    assert slept == [7.0]

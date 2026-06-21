@@ -1,6 +1,5 @@
 import asyncio
 import os
-import random
 import time
 
 from google import genai
@@ -79,88 +78,6 @@ def reset_inference_semaphore() -> None:
     _semaphore = None
     _semaphore_loop = None
     _semaphore_limit = None
-
-
-def _is_transient(exc: Exception) -> bool:
-    """¿El error amerita reintento? 429/5xx/timeout = transitorio; 4xx = fatal.
-
-    Un ``APIError`` con ``code`` 429 o >=500 es transitorio (rate limit / fallo
-    del servidor); cualquier otro 4xx (400/401/403/404) es fatal (config / auth /
-    request mal armado) y reintentar solo desperdicia cuota. Los timeouts se
-    tratan como transitorios.
-    """
-    if isinstance(exc, asyncio.TimeoutError):
-        return True
-    if isinstance(exc, genai_errors.APIError):
-        code = getattr(exc, "code", None)
-        if code is None:
-            return False
-        return code == 429 or code >= 500
-    return False
-
-
-def _retry_after_seconds(exc: Exception) -> float | None:
-    """Lee ``Retry-After`` del header de un 429/503 si viene; si no, None.
-
-    El SDK guarda la respuesta httpx/requests en ``exc.response``. El header
-    puede ser segundos (entero) o una fecha HTTP; aca solo se soporta el formato
-    en segundos (el comun en 429), tolerando ausencia/parse fallido.
-    """
-    response = getattr(exc, "response", None)
-    headers = getattr(response, "headers", None)
-    if not headers:
-        return None
-    try:
-        raw = headers.get("Retry-After") or headers.get("retry-after")
-    except AttributeError:
-        return None
-    if not raw:
-        return None
-    try:
-        seconds = float(raw)
-    except (TypeError, ValueError):
-        return None
-    return seconds if seconds >= 0 else None
-
-
-async def with_retries(
-    coro_factory,
-    *,
-    max_attempts: int = 4,
-    base_delay: float = 0.5,
-    max_delay: float = 30.0,
-    sleep=asyncio.sleep,
-):
-    """Ejecuta ``coro_factory()`` con backoff exponencial + jitter ante transitorios.
-
-    - ``coro_factory`` es un callable sin args que devuelve una corrutina fresca
-      por intento (no se puede re-await la misma corrutina).
-    - Reintenta solo errores transitorios (``_is_transient``: 429/5xx/timeout).
-      Los fatales (4xx de config/auth, o cualquier excepcion inesperada) se
-      propagan en el acto.
-    - Respeta ``Retry-After`` del header 429 cuando viene; si no, usa
-      ``base_delay * 2**intento`` capado a ``max_delay``, con jitter [0, delay).
-    - ``sleep`` es inyectable para tests (evita esperas reales).
-
-    Opt-in: los runners pueden activarlo en modo produccion. En modo benchmark
-    se deja desactivado para no enmascarar las tasas de fallo reales que el
-    artefacto mide (ver `medicion_fase2.md`).
-    """
-    attempt = 0
-    while True:
-        try:
-            return await coro_factory()
-        except Exception as exc:  # noqa: BLE001 - se reclasifica abajo
-            attempt += 1
-            if attempt >= max_attempts or not _is_transient(exc):
-                raise
-            retry_after = _retry_after_seconds(exc)
-            if retry_after is not None:
-                delay = min(retry_after, max_delay)
-            else:
-                backoff = min(base_delay * (2 ** (attempt - 1)), max_delay)
-                delay = random.uniform(0, backoff)  # noqa: S311 - jitter, no cripto
-            await sleep(delay)
 
 
 # Provider activo (Fase 3): el framework habla con esta abstraccion, no con el
@@ -302,8 +219,6 @@ async def generate_content_sync(
     contents,
     config,
     timeout: float | None = None,
-    *,
-    retry: bool = False,
 ):
     """Run a non-streaming request and return a normalized response payload.
 
@@ -314,9 +229,7 @@ async def generate_content_sync(
 
     La llamada real a la API queda envuelta por el Semaphore compartido
     (`get_inference_semaphore`), de modo que el nº de requests in-flight nunca
-    supere el limite configurado, incluso bajo un caller concurrente (W·M). Con
-    ``retry=True`` se aplica backoff exponencial + jitter respetando
-    ``Retry-After`` ante transitorios (opt-in; off en modo benchmark).
+    supere el limite configurado, incluso bajo un caller concurrente (W·M).
     """
     provider = get_provider()
     semaphore = get_inference_semaphore()
@@ -327,10 +240,7 @@ async def generate_content_sync(
             inner = provider.generate_content(model=model, contents=contents, config=config)
             return await (asyncio.wait_for(inner, timeout=timeout) if timeout else inner)
 
-    if retry:
-        response = await with_retries(_call)
-    else:
-        response = await _call()
+    response = await _call()
     duration = time.time() - start
 
     return {
@@ -347,15 +257,12 @@ async def generate_content_stream(
     contents,
     config,
     timeout: float | None = None,
-    *,
-    retry: bool = False,
 ):
     """Run a streaming request and return the concatenated text plus usage metadata.
 
     El Semaphore compartido envuelve toda la sesion de streaming (no solo el
     arranque): una request en stream sigue ocupando una conexion mientras se
-    consume, asi que debe contar como un in-flight hasta que termina. Con
-    ``retry=True`` se reintenta el arranque ante transitorios (opt-in).
+    consume, asi que debe contar como un in-flight hasta que termina.
     """
     provider = get_provider()
     semaphore = get_inference_semaphore()
@@ -380,12 +287,7 @@ async def generate_content_stream(
                 if chunk.usage_metadata:
                     usage = chunk.usage_metadata
 
-    def _attempt():
-        return asyncio.wait_for(consume(), timeout=timeout) if timeout else consume()
-
-    if retry:
-        await with_retries(_attempt)
-    elif timeout:
+    if timeout:
         await asyncio.wait_for(consume(), timeout=timeout)
     else:
         await consume()
