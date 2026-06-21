@@ -108,12 +108,17 @@ def _extract_response_text(response):
 
 
 async def generate_content_sync(model: str, contents, config, timeout: float | None = None):
-    """Run a non-streaming request and return a normalized response payload."""
-    client = _create_client()
+    """Run a non-streaming request and return a normalized response payload.
+
+    Uses the SDK async client (``client.aio``) so that ``asyncio.wait_for`` can
+    actually cancel the in-flight request on timeout. A blocking call wrapped in
+    ``asyncio.to_thread`` would keep running (and billing) after the timeout
+    because executor threads are not cancelable.
+    """
+    client = _create_async_client()
     start = time.time()
 
-    call = asyncio.to_thread(
-        client.models.generate_content,
+    call = client.aio.models.generate_content(
         model=model,
         contents=contents,
         config=config,
