@@ -14,14 +14,18 @@ Models benchmarked: gemini-3-flash-preview, gemini-3.1-pro-preview
 | **Time to 1st Token (TTFT)** | 15.70s | 0.00s | 14.46s | 13.37s | 0.00s | 0.00s | 2.12s | 42.17s |
 | **Avg Thought Tokens** | 2,648 | 4,049 | 2,645 | 2,586 | 10,713 | 3,862 | 0 | 4,822 |
 | **Avg Total Tokens** | 7,704 | 8,950 | 4,609 | 3,913 | 13,983 | 8,704 | 4,876 | 10,338 |
-| **Avg Cost per Request** | $0.00180 | $0.00235 | $0.00149 | $0.00141 | $0.00485 | $0.00227 | $0.00073 | $0.03400 |
+| **Avg Cost per Request (est.)** | $0.00180 | $0.00235 | $0.00149 | $0.00141 | $0.00485 | $0.00227 | $0.00073 | $0.03400 |
 | **API Success Rate** | 100% | 100% | 80% | 100% | 93% | 100% | 100% | 93% |
 | **Valid Output Rate** | 100% | 100% | 73% | 100% | 93% | 100% | 93% | 87% |
 
 ## Quality Gate
 
-All leaderboard metrics above are calculated only from runs that completed and passed the output validator.
+All leaderboard metrics above are calculated only from runs whose recorded `output_valid` flag is true.
+In a live benchmark that flag comes from the output validator; this report was regenerated from logs via `salvage.py`, so the flag is read back from each run's logged value (the validator is not re-executed).
 The validator checks JSON parseability, root shape, required keys, CEFR level coverage, and a headword policy that rejects obvious grammatical-form collisions.
+
+Cost is an estimate, not a billed figure: it multiplies token counts by the model's published per-million rates.
+When a report is regenerated from logs, the input/output token split is not in the log and is approximated by a heuristic in `salvage.py`, so the cost column here is doubly estimated.
 
 ## Strategy Notes
 

@@ -47,8 +47,13 @@ def salvage():
         tot = int(total_str.replace(",", ""))
         tho = int(thought_str.replace(",", ""))
         
-        # Heuristic for cost (since exact split isn't in log)
-        # Thinking tokens are billed as output. Assume ~800 standard output tokens.
+        # ESTIMATED cost only: the log records total + thought tokens but not the
+        # input/output split, so the split below is a heuristic, NOT a measurement.
+        # Thinking tokens are billed as output; we assume ~800 standard output
+        # tokens on top, falling back to 30% of total when that overshoots.
+        # The generated report labels this column as estimated and documents the
+        # heuristic in its Quality Gate section. Regenerate from a real run if you
+        # need a measured split.
         est_out = tho + 800
         if est_out > tot:
             est_out = tot * 0.3 # Fallback safely
