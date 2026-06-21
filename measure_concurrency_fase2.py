@@ -63,15 +63,13 @@ def _make_stage1(num_meanings):
 
 _STAGE2 = {
     "examples": [
-        {"sourceFi": f"lause {lvl}", "level": lvl}
-        for lvl in ["a1", "a2", "b1", "b2", "c1", "c2"]
+        {"sourceFi": f"lause {lvl}", "level": lvl} for lvl in ["a1", "a2", "b1", "b2", "c1", "c2"]
     ]
 }
 
 _STAGE3 = {
     "spoken_examples": [
-        {"spokenFi": f"puhe {lvl}", "level": lvl}
-        for lvl in ["a1", "a2", "b1", "b2", "c1", "c2"]
+        {"spokenFi": f"puhe {lvl}", "level": lvl} for lvl in ["a1", "a2", "b1", "b2", "c1", "c2"]
     ]
 }
 
@@ -163,13 +161,14 @@ async def main():
     print("  MEDICION FASE 2 — concurrencia estructural (cliente Gemini MOCKEADO)")
     print("  in-flight = requests concurrentes simultaneas observadas (pico)")
     print("=" * 78)
-    header = f"{'meanings':>9} | {'cascade in-flight':>17} | {'cascade calls':>13} | {'pipeline in-flight':>18} | {'pipeline calls':>14}"
+    header = (
+        f"{'meanings':>9} | {'cascade in-flight':>17} | {'cascade calls':>13} | "
+        f"{'pipeline in-flight':>18} | {'pipeline calls':>14}"
+    )
     print(header)
     print("-" * len(header))
     for n, c_max, c_total, p_max, p_total in rows:
-        print(
-            f"{n:>9} | {c_max:>17} | {c_total:>13} | {p_max:>18} | {p_total:>14}"
-        )
+        print(f"{n:>9} | {c_max:>17} | {c_total:>13} | {p_max:>18} | {p_total:>14}")
     print("-" * len(header))
     print(
         "Lectura: en cascade el in-flight pico == nº de meanings (sin tope: escala "
