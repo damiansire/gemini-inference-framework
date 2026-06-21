@@ -5,10 +5,16 @@ description = "Framework de benchmarking e inferencia para estrategias multi-eta
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
+authors = [{ name = "Damian Sire", email = "damiansire@gmail.com" }]
+keywords = ["gemini", "llm", "inference", "benchmarking"]
 dependencies = [
     "google-genai>=1.0",
     "python-dotenv>=1.0",
 ]
+
+[project.urls]
+Repository = "https://github.com/damiansire/gemini-inference-framework"
+Homepage = "https://github.com/damiansire/gemini-inference-framework"
 
 [tool.pytest.ini_options]
 # Orden aleatorio fuerza independencia entre tests; los timeouts se arreglan
