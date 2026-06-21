@@ -11,6 +11,7 @@ Models benchmarked: gemini-3-flash-preview, gemini-3.1-pro-preview
 | Metric | Monolithic (No Schema) | Monolithic (Strict Schema) | Optimized Monolithic | Lazy Optimized (A1-B1) | Pipeline (Multi-stage) | Structured Cascade | Thinking Budget (LOW) | Pro Model |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Avg Latency (E2E)** | 21.98s | 28.88s | 20.70s | 16.14s | 152.89s | 17.23s | 8.21s | 54.67s |
+| **Latency Std Dev** | +/-4.35s | +/-7.33s | +/-8.01s | +/-8.58s | +/-74.04s | +/-4.30s | +/-2.15s | +/-10.56s |
 | **Time to 1st Token (TTFT)** | 15.70s | 0.00s | 14.46s | 13.37s | 0.00s | 0.00s | 2.12s | 42.17s |
 | **Avg Thought Tokens** | 2,648 | 4,049 | 2,645 | 2,586 | 10,713 | 3,862 | 0 | 4,822 |
 | **Avg Total Tokens** | 7,704 | 8,950 | 4,609 | 3,913 | 13,983 | 8,704 | 4,876 | 10,338 |
@@ -30,7 +31,8 @@ When a report is regenerated from logs, the input/output token split is not in t
 ## Strategy Notes
 
 - Lazy Optimized is the fastest partial-output strategy at 16.14s average latency.
-- The fastest fully valid strategy is Lazy Optimized (A1-B1) at 16.14s average latency.
+- The fastest fully valid strategy is Lazy Optimized (A1-B1) at 16.14s average latency (+/-8.58s).
+- Latency is averaged over a small n per strategy with wide LLM-side variance; treat sub-second gaps between the top strategies as within the margin, not a clear winner. Lazy Optimized (16.14 +/-8.58s) and Structured Cascade (17.23 +/-4.30s) overlap heavily.
 - Outside the lazy variant, the lowest-latency approach is Thinking Budget (LOW).
 - Schema enforcement changed average thought-token usage by +52.9% versus the monolithic baseline.
 

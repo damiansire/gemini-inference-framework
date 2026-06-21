@@ -29,18 +29,20 @@ The prompt generates structured JSON dictionary entries for Finnish words, requi
 
 **8 strategies × 5 words × 3 iterations** — with UUID+epoch cache busting, randomized execution order, model warmup, and structural output validation.
 
-| Strategy | Avg Latency | Avg Thought Tokens | Max Thought | Avg Cost (USD) | Success Rate | Failure Rate |
+| Strategy | Avg Latency (±std) | Avg Thought Tokens | Max Thought | Avg Cost (USD, est.) | Success Rate | Failure Rate |
 |---|---|---|---|---|---|---|
-| **Thinking Budget (LOW)** | **8.2s** ⚡ | **0** | 0 | $0.0007 | 93.3% | 6.7% |
-| **Lazy Optimized (A1-B1)** | **16.1s** | 2,586 | 6,620 | $0.0014 | 100% | 0% |
-| **Structured Cascade** | **17.2s** ✅ | 3,862 | 10,195 | $0.0023 | **100%** | **0%** |
-| Optimized Monolithic | 20.7s | 2,645 | 5,785 | $0.0015 | 73.3% | 26.7% |
-| Monolithic (No Schema) | 22.0s | 2,648 | 4,498 | $0.0018 | 100% | 0% |
-| Monolithic (Strict Schema) | 28.9s | 4,049 | 6,597 | $0.0024 | 100% | 0% |
-| Pro Model (3.1) | 54.7s | 4,822 | 7,420 | **$0.0340** 💸 | 86.7% | 13.3% |
-| **Pipeline (Multi-stage)** | **152.9s** 🐌 | **10,713** | **18,144** | $0.0049 | 93.3% | 6.7% |
+| **Thinking Budget (LOW)** | **8.2s** ±2.2s ⚡ | **0** | 0 | $0.0007 | 93.3% | 6.7% |
+| **Lazy Optimized (A1-B1)** | **16.1s** ±8.6s | 2,586 | 6,620 | $0.0014 | 100% | 0% |
+| **Structured Cascade** | **17.2s** ±4.3s ✅ | 3,862 | 10,195 | $0.0023 | **100%** | **0%** |
+| Optimized Monolithic | 20.7s ±8.0s | 2,645 | 5,785 | $0.0015 | 73.3% | 26.7% |
+| Monolithic (No Schema) | 22.0s ±4.4s | 2,648 | 4,498 | $0.0018 | 100% | 0% |
+| Monolithic (Strict Schema) | 28.9s ±7.3s | 4,049 | 6,597 | $0.0024 | 100% | 0% |
+| Pro Model (3.1) | 54.7s ±10.6s | 4,822 | 7,420 | **$0.0340** 💸 | 86.7% | 13.3% |
+| **Pipeline (Multi-stage)** | **152.9s** ±74.0s 🐌 | **10,713** | **18,144** | $0.0049 | 93.3% | 6.7% |
 
 > **Test words:** `hana`, `kuusi`, `juosta`, `vanha`, `silta` — deliberately chosen for varying lexical ambiguity (hana = 3+ meanings vs. silta = 1 clear meaning).
+>
+> **On ranking:** each strategy is averaged over only n=15 runs with wide LLM-side variance. Sub-second gaps between adjacent strategies are within the margin, not a clear ordering — e.g. Lazy Optimized (16.1 ±8.6s) and Structured Cascade (17.2 ±4.3s) overlap heavily. Cost is an estimate (token counts × published rates), not a billed figure.
 
 ---
 
@@ -90,7 +92,7 @@ The most counterintuitive finding: **Pipeline (sequential multi-stage) is the wo
 | 2 | Monolithic (Strict Schema) | API-level `response_schema` enforcement | +31% latency vs baseline due to schema compliance overhead |
 | 3 | Optimized Monolithic | Shorter prompt with Few-Shot patterns | Fast but 26.7% failure rate |
 | 4 | Lazy Optimized (A1-B1) | Only generates 3 CEFR levels instead of 6 | Best cost/performance for partial output |
-| 5 | **Structured Cascade** | Per-stage thinking + parallel execution | **Production winner — 17.2s, 100% success** |
+| 5 | **Structured Cascade** | Per-stage thinking + parallel execution | **Production pick — 17.2s ±4.3s, 100% success (within the margin of the top fully-valid strategies)** |
 | 6 | Pipeline (Multi-stage) | Sequential decomposition, no thinking control | Worst: 152.9s, reasoning spirals in Stage 3 |
 | 7 | Thinking Budget (LOW) | Monolithic with `thinking_level=LOW` | Fastest at 8.2s, but 6.7% malformed outputs |
 | 8 | Pro Model | `gemini-3.1-pro-preview` | 19x cost, lower reliability than architected Flash |

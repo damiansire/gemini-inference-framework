@@ -321,6 +321,7 @@ def _generate_benchmark_report(data):
     rows = []
     metric_rows = [
         ("Avg Latency (E2E)", "avg_duration", lambda value: f"{value:.2f}s"),
+        ("Latency Std Dev", "std_duration", lambda value: f"+/-{value:.2f}s"),
         ("Time to 1st Token (TTFT)", "avg_ttft", lambda value: f"{value:.2f}s"),
         ("Avg Thought Tokens", "avg_thought_tokens", lambda value: f"{value:,.0f}"),
         ("Avg Total Tokens", "avg_total_tokens", lambda value: f"{value:,.0f}"),
@@ -372,7 +373,13 @@ def _generate_benchmark_report(data):
         )
     if best_quality:
         report.append(
-            f"- The fastest fully valid strategy is {best_quality[1]['name']} at {best_quality[1]['avg_duration']:.2f}s average latency."
+            f"- The fastest fully valid strategy is {best_quality[1]['name']} at "
+            f"{best_quality[1]['avg_duration']:.2f}s average latency "
+            f"(+/-{best_quality[1]['std_duration']:.2f}s)."
+        )
+        report.append(
+            "- Latency is averaged over a small n per strategy with wide LLM-side variance; "
+            "treat sub-second gaps between the top strategies as within the margin, not a clear winner."
         )
     if fastest:
         report.append(
