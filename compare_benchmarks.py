@@ -542,7 +542,10 @@ async def main():
     print(f"  Strategies: {args.strategies}")
     print(f"  Iterations: {args.iterations}")
     print(f"  Timeout: {args.timeout}s")
-    print(f"  Total API calls: ~{len(args.words) * len(args.strategies) * args.iterations}")
+    print(
+        f"  Total runs: {len(args.words) * len(args.strategies) * args.iterations} "
+        "(multi-stage strategies emit several Gemini calls per run)"
+    )
     print("=" * 70)
 
     os.makedirs(RESULTS_DIR, exist_ok=True)

@@ -47,6 +47,8 @@ The prompt generates structured JSON dictionary entries for Finnish words, requi
 > **Test words:** `hana`, `kuusi`, `juosta`, `vanha`, `silta` — deliberately chosen for varying lexical ambiguity (hana = 3+ meanings vs. silta = 1 clear meaning).
 >
 > **On ranking:** each strategy is averaged over only n=15 runs with wide LLM-side variance. Sub-second gaps between adjacent strategies are within the margin, not a clear ordering — e.g. Lazy Optimized (16.1 ±8.6s) and Structured Cascade (17.2 ±4.3s) overlap heavily. Cost is an estimate (token counts × published rates), not a billed figure.
+>
+> **On "Valid Output Rate":** this metric is not strictly apples-to-apples across strategies. Monolithic (No Schema) is validated against **raw one-shot JSON** the model emits, where structure can genuinely fail. The multi-stage strategies (`cascade`, `pipeline`) instead **assemble their output in code** (`stage_assembly.assemble_examples`) from sub-responses already constrained by per-stage `response_schema`, so the structural shape the validator checks is largely guaranteed by construction. Read the cascade/pipeline 100% as "valid assembly after schema-constrained sub-calls", not as the same test the monolithic baseline passes.
 
 ---
 
@@ -84,7 +86,9 @@ The most counterintuitive finding: **Pipeline (sequential multi-stage) is the wo
 
 ### 5. Suppressing Thinking is Fast but Fragile
 
-`thinking_level=LOW` produces the fastest results (8.2s) with **zero thought tokens**, but sacrifices **6.7% of outputs** to JSON validation failures. Acceptable with retry logic; not suitable for fire-and-forget production.
+In **this monolithic prompt**, `thinking_level=LOW` produced the fastest results (8.2s) and collapsed thought usage to **~0 tokens** in our runs — but it also sacrificed **6.7% of outputs** to JSON validation failures. Acceptable with retry logic; not suitable for fire-and-forget production.
+
+> **Note — `LOW` is not a guaranteed zero.** The ~0 thought tokens above is an empirical observation for the *monolithic* task, not a property of the level. The **Structured Cascade also uses `thinking_level=LOW`** in Stages 1–2 (`strategies/cascade/runner.py:138,161`) yet still measures **3,862 avg / 10,195 max thought tokens**. Whether `LOW` collapses thinking to zero depends on the task and prompt, not on the level alone.
 
 ---
 
@@ -110,8 +114,7 @@ The most counterintuitive finding: **Pipeline (sequential multi-stage) is the wo
 ├── prompts.py               # All prompt variants, system messages, schemas
 ├── .env                     # GOOGLE_API_KEY
 ├── strategies/
-│   ├── monolithic/          # Baseline strategy
-│   ├── monolithic_schema/   # Strict schema enforcement
+│   ├── monolithic/          # Baseline + strict-schema variant (run_monolithic_schema)
 │   ├── optimized_monolithic/# Shortened few-shot prompt
 │   ├── lazy_optimized/      # Partial CEFR (A1-B1 only)
 │   ├── cascade/             # ✅ Structured Cascade (production)
@@ -121,9 +124,6 @@ The most counterintuitive finding: **Pipeline (sequential multi-stage) is the wo
 │   ├── output_validation.py # JSON + CEFR structure validator
 │   └── utils.py             # Shared: cost rates, metrics, API helpers
 ├── benchmark_results/       # Generated reports, raw JSON, drafts
-├── docs/
-│   ├── ARCHITECTURE.md      # Technical analysis of reasoning explosion
-│   └── ...
 └── dashboard/               # Visualization UI
     ├── index.html
     ├── index.css
@@ -141,7 +141,9 @@ The most counterintuitive finding: **Pipeline (sequential multi-stage) is the wo
 # 2. Quick smoke test (1 word, 1 iteration)
 ./venv/bin/python compare_benchmarks.py --words silta --iterations 1
 
-# 3. Full benchmark (all 8 strategies, 5 words, 3 iterations = 120 calls)
+# 3. Full benchmark (all 8 strategies, 5 words, 3 iterations = 120 runs;
+#    multi-stage strategies emit several Gemini calls per run, so the real
+#    API-call count is higher)
 ./venv/bin/python compare_benchmarks.py \
   --strategies monolithic monolithic_schema optimized_monolithic lazy_optimized pipeline cascade thinking_budget pro_model \
   --iterations 3
