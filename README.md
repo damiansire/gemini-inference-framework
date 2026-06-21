@@ -65,10 +65,10 @@ The **Structured Cascade** decomposes the task into 3 specialized stages with pe
 | Stage | Task | Thinking Level | Temperature |
 |---|---|---|---|
 | Stage 1 | Extract meanings & definitions | `LOW` | 0.2 |
-| Stage 2 | Generate CEFR examples (parallel) | `LOW` | 0.7 |
-| Stage 3 | SpokenFi transformation (parallel) | `MINIMAL` | 0.0 |
+| Stage 2 | Generate CEFR examples (per meaning) | `LOW` | 0.7 |
+| Stage 3 | SpokenFi transformation (per meaning, after Stage 2) | `MINIMAL` | 0.0 |
 
-**Result:** 17.2s average with **100% success rate** across all 15 runs. Stage 2 and 3 run in parallel via `asyncio.gather`.
+**Result:** 17.2s average with **100% success rate** across all 15 runs. Each meaning is processed in parallel via `asyncio.gather`; within a single meaning, Stage 2 → Stage 3 runs sequentially because Stage 3 transforms Stage 2's output.
 
 ### 3. Pipeline is an Anti-Pattern
 
