@@ -1,13 +1,16 @@
-import asyncio
-
 from google.genai import types
+
+from prompts import LAZY_SYSTEM_MESSAGE, get_lazy_user_message
+
 from ..utils import (
+    EXPECTED_INFERENCE_ERRORS,
     FLASH_MODEL,
     _extract_usage,
     estimate_cost,
     generate_content_stream,
+    inference_failure_result,
 )
-from prompts import LAZY_SYSTEM_MESSAGE, get_lazy_user_message
+
 
 async def run_lazy_optimized(word, salt=None, timeout=120):
     """Strategy: Lazy Optimized - Generates only 3 sentences (A1, A2, B1) with Streaming TTFT."""
@@ -42,17 +45,5 @@ async def run_lazy_optimized(word, salt=None, timeout=120):
             "timed_out": False,
             "text_output": response["text"],
         }
-    except Exception as e:
-        error_message = str(e) or repr(e)
-        return {
-            "success": False,
-            "duration": 0,
-            "ttft": 0,
-            "prompt_tokens": 0,
-            "candidate_tokens": 0,
-            "thought_tokens": 0,
-            "total_tokens": 0,
-            "cost": 0,
-            "timed_out": isinstance(e, asyncio.TimeoutError),
-            "error": error_message,
-        }
+    except EXPECTED_INFERENCE_ERRORS as e:
+        return inference_failure_result(e)

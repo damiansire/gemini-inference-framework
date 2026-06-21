@@ -1,13 +1,16 @@
-import asyncio
-
 from google.genai import types
+
+from prompts import SYSTEM_MESSAGE, get_user_message
+
 from ..utils import (
+    EXPECTED_INFERENCE_ERRORS,
     FLASH_MODEL,
     _extract_usage,
     estimate_cost,
     generate_content_stream,
+    inference_failure_result,
 )
-from prompts import SYSTEM_MESSAGE, get_user_message
+
 
 async def run_thinking_budget(word, salt=None, thinking_level="LOW", timeout=120):
     """Strategy 4: Monolithic with explicit thinking level cap and Streaming TTFT."""
@@ -43,17 +46,5 @@ async def run_thinking_budget(word, salt=None, thinking_level="LOW", timeout=120
             "text_output": response["text"],
             "thinking_level": thinking_level,
         }
-    except Exception as e:
-        return {
-            "success": False,
-            "duration": 0,
-            "ttft": 0,
-            "prompt_tokens": 0,
-            "candidate_tokens": 0,
-            "thought_tokens": 0,
-            "total_tokens": 0,
-            "cost": 0,
-            "timed_out": isinstance(e, asyncio.TimeoutError),
-            "error": str(e),
-            "thinking_level": thinking_level,
-        }
+    except EXPECTED_INFERENCE_ERRORS as e:
+        return inference_failure_result(e, thinking_level=thinking_level)

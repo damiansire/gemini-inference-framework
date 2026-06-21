@@ -5,6 +5,9 @@ description = "Framework de benchmarking e inferencia para estrategias multi-eta
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
+dependencies = [
+    "google-genai>=1.0",
+]
 
 [tool.pytest.ini_options]
 # Orden aleatorio fuerza independencia entre tests; los timeouts se arreglan
@@ -25,3 +28,8 @@ extend-select = ["B", "C4", "E", "F", "S", "I", "SIM", "UP", "W"]
 [tool.ruff.lint.per-file-ignores]
 # En tests se permiten asserts (S101) y datos "hardcodeados" de fixtures.
 "tests/**" = ["S101", "S105", "S106"]
+# prompts.py es texto de prompts en lenguaje natural: el contenido (incluido
+# el whitespace dentro de los string literals) debe quedar verbatim. Partir
+# lineas largas (E501) o recortar espacios (W291/W293) cambiaria el prompt que
+# se le manda al modelo, asi que se ignoran solo en este archivo.
+"prompts.py" = ["E501", "W291", "W293"]

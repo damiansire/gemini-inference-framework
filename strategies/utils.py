@@ -3,9 +3,22 @@ import os
 import time
 
 from google import genai
+from google.genai import errors as genai_errors
 
 FLASH_MODEL = "gemini-3-flash-preview"
 PRO_MODEL = "gemini-3.1-pro-preview"
+
+# Errores que un leaf runner SI debe tragar y reportar como "run fallido":
+# son fallos esperados de inferencia/red (timeout, o un error de la API de
+# Gemini como 429/5xx). Cualquier otra excepcion (GOOGLE_API_KEY ausente,
+# error de auth, KeyError/TypeError por un bug de config o programacion) NO
+# entra aca a proposito: debe propagar al orquestador, que la loguea con
+# traceback en vez de contarla como un fallo de la estrategia y contaminar la
+# tasa de exito del benchmark.
+#
+# ``genai.errors.APIError`` es la base de ``ClientError`` (4xx, incl. 429) y
+# ``ServerError`` (5xx) del SDK, asi que cubre los transitorios de API.
+EXPECTED_INFERENCE_ERRORS = (asyncio.TimeoutError, genai_errors.APIError)
 
 COST_RATES = {
     FLASH_MODEL: {"input": 0.10, "output": 0.40},
@@ -66,6 +79,30 @@ def estimate_cost(input_tokens, output_tokens, model=FLASH_MODEL):
     return (input_tokens / 1_000_000 * rates["input"]) + (
         output_tokens / 1_000_000 * rates["output"]
     )
+
+
+def inference_failure_result(exc, **extra):
+    """Dict plano de fallo para un error de inferencia ESPERADO.
+
+    Pensado solo para excepciones de ``EXPECTED_INFERENCE_ERRORS`` (timeout o
+    error de la API). Aplana el error a string como pide el contrato comun,
+    marca ``timed_out`` cuando corresponde, y deja pasar campos extra por
+    estrategia (p. ej. ``thinking_level``). Los errores inesperados NO deben
+    pasar por aca: se dejan propagar para que el orquestador los loguee.
+    """
+    return {
+        "success": False,
+        "duration": 0,
+        "ttft": 0,
+        "prompt_tokens": 0,
+        "candidate_tokens": 0,
+        "thought_tokens": 0,
+        "total_tokens": 0,
+        "cost": 0,
+        "timed_out": isinstance(exc, asyncio.TimeoutError),
+        "error": str(exc) or repr(exc),
+        **extra,
+    }
 
 
 def _create_client():

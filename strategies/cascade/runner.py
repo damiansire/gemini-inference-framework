@@ -5,14 +5,15 @@ from datetime import datetime
 
 from google.genai import types
 
-from ..output_validation import parse_payload
-from ..stage_assembly import assemble_examples, build_spoken_map
-from ..utils import FLASH_MODEL, MetricsTracker, generate_content_sync
 from prompts import (
     CASCADE_STAGE1_SYSTEM,
     CASCADE_STAGE2_SYSTEM,
     CASCADE_STAGE3_SYSTEM,
 )
+
+from ..output_validation import parse_payload
+from ..stage_assembly import assemble_examples, build_spoken_map
+from ..utils import FLASH_MODEL, MetricsTracker, generate_content_sync
 
 STAGE1_SCHEMA = types.Schema(
     type="OBJECT",
@@ -123,7 +124,8 @@ async def run_cascade(word: str = "hana", salt: str = None, timeout: float = 120
     e2e_start = time.time()
 
     print(
-        f"      [{datetime.now().strftime('%H:%M:%S')}] [Cascade] Stage 1: Extracting meanings for '{word}'..."
+        f"      [{datetime.now().strftime('%H:%M:%S')}] [Cascade] "
+        f"Stage 1: Extracting meanings for '{word}'..."
     )
     stage1_system = CASCADE_STAGE1_SYSTEM
     if salt:
@@ -143,7 +145,8 @@ async def run_cascade(word: str = "hana", salt: str = None, timeout: float = 120
     async def process_meaning(meaning: dict, idx: int):
         definition = meaning["englishDefinition"]
         print(
-            f"      [{datetime.now().strftime('%H:%M:%S')}] [Cascade] Stage 2: CEFR examples for meaning {idx + 1}..."
+            f"      [{datetime.now().strftime('%H:%M:%S')}] [Cascade] "
+            f"Stage 2: CEFR examples for meaning {idx + 1}..."
         )
         stage2_system = CASCADE_STAGE2_SYSTEM
         if salt:
@@ -164,7 +167,8 @@ async def run_cascade(word: str = "hana", salt: str = None, timeout: float = 120
         )
 
         print(
-            f"      [{datetime.now().strftime('%H:%M:%S')}] [Cascade] Stage 3: SpokenFi transform for meaning {idx + 1}..."
+            f"      [{datetime.now().strftime('%H:%M:%S')}] [Cascade] "
+            f"Stage 3: SpokenFi transform for meaning {idx + 1}..."
         )
         stage3_system = CASCADE_STAGE3_SYSTEM
         if salt:
@@ -188,7 +192,9 @@ async def run_cascade(word: str = "hana", salt: str = None, timeout: float = 120
             spoken_map = build_spoken_map(spoken_data["spoken_examples"])
         except Exception as exc:
             print(
-                f"      [{datetime.now().strftime('%H:%M:%S')}] [Cascade] Stage 3 fallback for meaning {idx + 1}: {str(exc) or type(exc).__name__}"
+                f"      [{datetime.now().strftime('%H:%M:%S')}] [Cascade] "
+                f"Stage 3 fallback for meaning {idx + 1}: "
+                f"{str(exc) or type(exc).__name__}"
             )
             spoken_map = {}
 

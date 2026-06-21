@@ -1,13 +1,16 @@
-import asyncio
-
 from google.genai import types
+
+from prompts import SYSTEM_MESSAGE, get_user_message
+
 from ..utils import (
+    EXPECTED_INFERENCE_ERRORS,
     PRO_MODEL,
     _extract_usage,
     estimate_cost,
     generate_content_stream,
+    inference_failure_result,
 )
-from prompts import SYSTEM_MESSAGE, get_user_message
+
 
 async def run_pro_model(word, salt=None, timeout=180):
     """Strategy 5: Pro model — testing the community claim with Streaming TTFT."""
@@ -41,16 +44,5 @@ async def run_pro_model(word, salt=None, timeout=180):
             "timed_out": False,
             "text_output": response["text"],
         }
-    except Exception as e:
-        return {
-            "success": False,
-            "duration": 0,
-            "ttft": 0,
-            "prompt_tokens": 0,
-            "candidate_tokens": 0,
-            "thought_tokens": 0,
-            "total_tokens": 0,
-            "cost": 0,
-            "timed_out": isinstance(e, asyncio.TimeoutError),
-            "error": str(e),
-        }
+    except EXPECTED_INFERENCE_ERRORS as e:
+        return inference_failure_result(e)

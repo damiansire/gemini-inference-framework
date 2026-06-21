@@ -123,7 +123,10 @@ STRATEGIES = {
     "pipeline": {
         "name": "Pipeline (Multi-stage)",
         "runner": run_pipeline_strategy,
-        "description": "Sequential decomposition into extraction, CEFR generation, and SpokenFi transformation",
+        "description": (
+            "Sequential decomposition into extraction, CEFR generation, "
+            "and SpokenFi transformation"
+        ),
         "expected_levels": FULL_LEVELS,
     },
     "thinking_budget": {
@@ -356,12 +359,20 @@ def _generate_benchmark_report(data):
         "",
         "## Quality Gate",
         "",
-        "All leaderboard metrics above are calculated only from runs whose recorded `output_valid` flag is true.",
-        "In a live benchmark that flag comes from the output validator; in reports regenerated from logs via `salvage.py` it is read back from each run's logged flag (the validator is not re-executed).",
-        "The validator checks JSON parseability, root shape, required keys, CEFR level coverage, and a headword policy that rejects obvious grammatical-form collisions.",
+        "All leaderboard metrics above are calculated only from runs whose "
+        "recorded `output_valid` flag is true.",
+        "In a live benchmark that flag comes from the output validator; in "
+        "reports regenerated from logs via `salvage.py` it is read back from "
+        "each run's logged flag (the validator is not re-executed).",
+        "The validator checks JSON parseability, root shape, required keys, "
+        "CEFR level coverage, and a headword policy that rejects obvious "
+        "grammatical-form collisions.",
         "",
-        "Cost is an estimate, not a billed figure: it multiplies token counts by the model's published per-million rates.",
-        "When a report is regenerated from logs, the input/output token split is not in the log and is approximated by a heuristic in `salvage.py`, so the cost column there is doubly estimated.",
+        "Cost is an estimate, not a billed figure: it multiplies token counts "
+        "by the model's published per-million rates.",
+        "When a report is regenerated from logs, the input/output token split "
+        "is not in the log and is approximated by a heuristic in `salvage.py`, "
+        "so the cost column there is doubly estimated.",
         "",
         "## Strategy Notes",
         "",
@@ -373,7 +384,8 @@ def _generate_benchmark_report(data):
 
     if fastest_lazy and fastest_lazy["successful_runs"] > 0:
         report.append(
-            f"- Lazy Optimized is the fastest partial-output strategy at {fastest_lazy['avg_duration']:.2f}s average latency."
+            f"- Lazy Optimized is the fastest partial-output strategy at "
+            f"{fastest_lazy['avg_duration']:.2f}s average latency."
         )
     if best_quality:
         report.append(
@@ -382,8 +394,9 @@ def _generate_benchmark_report(data):
             f"(+/-{best_quality[1]['std_duration']:.2f}s)."
         )
         report.append(
-            "- Latency is averaged over a small n per strategy with wide LLM-side variance; "
-            "treat sub-second gaps between the top strategies as within the margin, not a clear winner."
+            "- Latency is averaged over a small n per strategy with wide "
+            "LLM-side variance; treat sub-second gaps between the top "
+            "strategies as within the margin, not a clear winner."
         )
     if fastest:
         report.append(
@@ -395,7 +408,8 @@ def _generate_benchmark_report(data):
         if baseline["avg_thought_tokens"] > 0:
             delta = ((schema["avg_thought_tokens"] / baseline["avg_thought_tokens"]) - 1) * 100
             report.append(
-                f"- Schema enforcement changed average thought-token usage by {delta:+.1f}% versus the monolithic baseline."
+                f"- Schema enforcement changed average thought-token usage by "
+            f"{delta:+.1f}% versus the monolithic baseline."
             )
 
     report.extend(
@@ -408,7 +422,8 @@ def _generate_benchmark_report(data):
     for strategy_key in strategy_keys:
         summary = summaries[strategy_key]
         report.append(
-            f"- {summary['name']}: {summary['successful_runs']}/{summary['total_runs']} valid runs, "
+            f"- {summary['name']}: {summary['successful_runs']}/"
+            f"{summary['total_runs']} valid runs, "
             f"{summary['validation_failed_runs']} validation failures, "
             f"{summary['total_runs'] - summary['api_successful_runs']} API failures."
         )
@@ -427,8 +442,11 @@ def _generate_gde_submission(data):
         "",
         "Hi everyone,",
         "",
-        "I benchmarked several mitigation strategies for the reported Gemini Flash latency spike on a Finnish dictionary-generation task.",
-        "This draft is generated from the current validated benchmark snapshot, so the numbers below only count outputs that passed structural quality checks.",
+        "I benchmarked several mitigation strategies for the reported Gemini "
+        "Flash latency spike on a Finnish dictionary-generation task.",
+        "This draft is generated from the current validated benchmark "
+        "snapshot, so the numbers below only count outputs that passed "
+        "structural quality checks.",
         "",
         "## Snapshot",
         "",
@@ -436,11 +454,13 @@ def _generate_gde_submission(data):
 
     if lazy and lazy["successful_runs"] > 0:
         lines.append(
-            f"- Fastest partial-output strategy: Lazy Optimized (A1-B1) at {lazy['avg_duration']:.2f}s average latency."
+            f"- Fastest partial-output strategy: Lazy Optimized (A1-B1) at "
+            f"{lazy['avg_duration']:.2f}s average latency."
         )
     if best_full:
         lines.append(
-            f"- Fastest fully valid strategy: {best_full[1]['name']} at {best_full[1]['avg_duration']:.2f}s average latency."
+            f"- Fastest fully valid strategy: {best_full[1]['name']} at "
+            f"{best_full[1]['avg_duration']:.2f}s average latency."
         )
     if summaries.get("monolithic_schema") and summaries.get("monolithic"):
         schema = summaries["monolithic_schema"]
@@ -448,7 +468,8 @@ def _generate_gde_submission(data):
         if baseline["avg_duration"] > 0:
             latency_delta = ((schema["avg_duration"] / baseline["avg_duration"]) - 1) * 100
             lines.append(
-                f"- API-level schema enforcement changed end-to-end latency by {latency_delta:+.1f}% versus the monolithic baseline."
+                f"- API-level schema enforcement changed end-to-end latency by "
+            f"{latency_delta:+.1f}% versus the monolithic baseline."
             )
 
     lines.extend(
@@ -456,9 +477,15 @@ def _generate_gde_submission(data):
             "",
             "## Suggested message",
             "",
-            "The strongest pattern in my benchmark is that output-contract pressure matters almost as much as reasoning depth.",
-            "Prompt variants that keep JSON MIME enforcement but avoid a rigid response schema tend to complete faster, and a quality gate is essential because some fast runs still produce unusable dictionaries.",
-            "For production I would recommend: optimized prompt first, explicit thinking budget as a kill switch, output validation, and a fallback path for the cases where Flash still drifts.",
+            "The strongest pattern in my benchmark is that output-contract "
+            "pressure matters almost as much as reasoning depth.",
+            "Prompt variants that keep JSON MIME enforcement but avoid a rigid "
+            "response schema tend to complete faster, and a quality gate is "
+            "essential because some fast runs still produce unusable "
+            "dictionaries.",
+            "For production I would recommend: optimized prompt first, explicit "
+            "thinking budget as a kill switch, output validation, and a "
+            "fallback path for the cases where Flash still drifts.",
             "",
             "All generated artifacts for this run are available in `benchmark_results/`.",
         ]
@@ -479,8 +506,10 @@ def _generate_article_draft(data):
         "",
         "## Core point",
         "",
-        "The benchmark suggests that the production problem is not just runaway reasoning.",
-        "It is the interaction between lexical ambiguity, rigid output contracts, and missing downstream validation.",
+        "The benchmark suggests that the production problem is not just "
+        "runaway reasoning.",
+        "It is the interaction between lexical ambiguity, rigid output "
+        "contracts, and missing downstream validation.",
         "",
         "## Current takeaways",
         "",
@@ -488,14 +517,19 @@ def _generate_article_draft(data):
 
     if best_full:
         lines.append(
-            f"- The current fastest fully valid strategy is {best_full[1]['name']} at {best_full[1]['avg_duration']:.2f}s."
+            f"- The current fastest fully valid strategy is "
+            f"{best_full[1]['name']} at {best_full[1]['avg_duration']:.2f}s."
         )
 
     lines.extend(
         [
-            "- A quality-adjusted benchmark is more honest than ranking raw latency over invalid outputs.",
-            "- Multi-stage orchestration is only persuasive when the implementation is reproducible and each stage is independently validated.",
-            "- Data-specific claims should live next to the benchmark snapshot that produced them.",
+            "- A quality-adjusted benchmark is more honest than ranking raw "
+            "latency over invalid outputs.",
+            "- Multi-stage orchestration is only persuasive when the "
+            "implementation is reproducible and each stage is independently "
+            "validated.",
+            "- Data-specific claims should live next to the benchmark snapshot "
+            "that produced them.",
         ]
     )
 
@@ -586,7 +620,8 @@ async def main():
         strategy = STRATEGIES[strategy_key]
         salt = f"{uuid.uuid4().hex[:8]}-{int(time.time() * 1000)}"
         print(
-            f"\n[{index}/{len(tasks)}] {strategy['name']} | word='{word}' | iteration={iteration} | salt={salt[:8]}"
+            f"\n[{index}/{len(tasks)}] {strategy['name']} | word='{word}' | "
+            f"iteration={iteration} | salt={salt[:8]}"
         )
 
         try:

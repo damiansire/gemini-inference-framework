@@ -4,14 +4,15 @@ from datetime import datetime
 
 from google.genai import types
 
-from ..output_validation import parse_payload
-from ..stage_assembly import assemble_examples, build_spoken_map
-from ..utils import FLASH_MODEL, MetricsTracker, generate_content_sync
 from prompts import (
     CASCADE_STAGE1_SYSTEM,
     CASCADE_STAGE2_SYSTEM,
     CASCADE_STAGE3_SYSTEM,
 )
+
+from ..output_validation import parse_payload
+from ..stage_assembly import assemble_examples, build_spoken_map
+from ..utils import FLASH_MODEL, MetricsTracker, generate_content_sync
 
 BASE_EXTRACTION_SCHEMA = types.Schema(
     type="OBJECT",
@@ -117,7 +118,8 @@ async def run_pipeline(word="hana", salt=None, timeout=120):
     e2e_start = time.time()
 
     print(
-        f"      [{datetime.now().strftime('%H:%M:%S')}] [Pipeline] Stage 1: Extracting meanings for '{word}'..."
+        f"      [{datetime.now().strftime('%H:%M:%S')}] [Pipeline] "
+        f"Stage 1: Extracting meanings for '{word}'..."
     )
     stage1_system = CASCADE_STAGE1_SYSTEM
     if salt:
@@ -138,7 +140,8 @@ async def run_pipeline(word="hana", salt=None, timeout=120):
     for idx, meaning in enumerate(base_data["meanings"], start=1):
         definition = meaning["englishDefinition"]
         print(
-            f"      [{datetime.now().strftime('%H:%M:%S')}] [Pipeline] Stage 2: CEFR examples for meaning {idx}..."
+            f"      [{datetime.now().strftime('%H:%M:%S')}] [Pipeline] "
+            f"Stage 2: CEFR examples for meaning {idx}..."
         )
         stage2_system = CASCADE_STAGE2_SYSTEM
         if salt:
@@ -158,7 +161,8 @@ async def run_pipeline(word="hana", salt=None, timeout=120):
         )
 
         print(
-            f"      [{datetime.now().strftime('%H:%M:%S')}] [Pipeline] Stage 3: SpokenFi transform for meaning {idx}..."
+            f"      [{datetime.now().strftime('%H:%M:%S')}] [Pipeline] "
+            f"Stage 3: SpokenFi transform for meaning {idx}..."
         )
         stage3_system = CASCADE_STAGE3_SYSTEM
         if salt:
@@ -181,7 +185,9 @@ async def run_pipeline(word="hana", salt=None, timeout=120):
             spoken_map = build_spoken_map(spoken_data["spoken_examples"])
         except Exception as exc:
             print(
-                f"      [{datetime.now().strftime('%H:%M:%S')}] [Pipeline] Stage 3 fallback for meaning {idx}: {str(exc) or type(exc).__name__}"
+                f"      [{datetime.now().strftime('%H:%M:%S')}] [Pipeline] "
+                f"Stage 3 fallback for meaning {idx}: "
+                f"{str(exc) or type(exc).__name__}"
             )
             spoken_map = {}
 

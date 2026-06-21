@@ -1,13 +1,16 @@
-import asyncio
-
 from google.genai import types
+
+from prompts import OPTIMIZED_SYSTEM_MESSAGE, get_user_message
+
 from ..utils import (
+    EXPECTED_INFERENCE_ERRORS,
     FLASH_MODEL,
     _extract_usage,
     estimate_cost,
     generate_content_stream,
+    inference_failure_result,
 )
-from prompts import get_user_message, OPTIMIZED_SYSTEM_MESSAGE
+
 
 async def run_optimized(word, salt=None, timeout=120):
     """Strategy: Optimized System Prompt with Zero Temperature and Streaming TTFT."""
@@ -42,16 +45,5 @@ async def run_optimized(word, salt=None, timeout=120):
             "timed_out": False,
             "text_output": response["text"],
         }
-    except Exception as e:
-        return {
-            "success": False,
-            "duration": 0,
-            "ttft": 0,
-            "prompt_tokens": 0,
-            "candidate_tokens": 0,
-            "thought_tokens": 0,
-            "total_tokens": 0,
-            "cost": 0,
-            "timed_out": isinstance(e, asyncio.TimeoutError),
-            "error": str(e),
-        }
+    except EXPECTED_INFERENCE_ERRORS as e:
+        return inference_failure_result(e)
