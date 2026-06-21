@@ -105,9 +105,7 @@ async def _run_stage(
         "temperature": temperature,
     }
     if thinking_level is not None:
-        config_kwargs["thinking_config"] = types.ThinkingConfig(
-            thinking_level=thinking_level
-        )
+        config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_level=thinking_level)
 
     response = await generate_content_sync(
         model=FLASH_MODEL,
@@ -208,15 +206,31 @@ async def run_cascade(word: str = "hana", salt: str = None, timeout: float = 120
             "definiendum": {"en": meaning["definiendum"]},
         }
 
-    final_entry = await asyncio.gather(
-        *(process_meaning(meaning, idx) for idx, meaning in enumerate(base_data["meanings"]))
+    # return_exceptions=True: el fallo de una acepcion NO debe cancelar a las
+    # corrutinas hermanas en vuelo ni tirar toda la palabra (H5). Cada resultado
+    # se inspecciona por separado; las acepciones que fallaron se descartan del
+    # entry final (Stage 2 no tiene fallback util) y se loguean.
+    results = await asyncio.gather(
+        *(process_meaning(meaning, idx) for idx, meaning in enumerate(base_data["meanings"])),
+        return_exceptions=True,
     )
+
+    final_entry = []
+    for idx, result in enumerate(results):
+        if isinstance(result, Exception):
+            print(
+                f"      [{datetime.now().strftime('%H:%M:%S')}] [Cascade] "
+                f"Meaning {idx + 1} failed, skipped: "
+                f"{str(result) or type(result).__name__}"
+            )
+            continue
+        final_entry.append(result)
 
     summary = metrics.summary()
     summary["e2e_duration"] = time.time() - e2e_start
     summary["mode"] = "cascade"
     summary["model"] = FLASH_MODEL
-    return list(final_entry), summary
+    return final_entry, summary
 
 
 if __name__ == "__main__":
