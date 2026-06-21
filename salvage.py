@@ -23,7 +23,7 @@ def salvage():
     # [1/120] Strategy Name | word='word' | iteration=X | salt=YYY
     #   VALID | dur=XX.XXs | ttft=XX.XXs | thought=XX,XXX | total=XX,XXX | api_success=True | output_valid=True
     
-    block_pattern = re.compile(r"\[\d+/120\]\s+(.*?)\s+\|\s+word='([^']+)'\s+\|\s+iteration=(\d+)\s+\|\s+salt=([a-f0-9]+).*?(VALID|FAILED|TIMEOUT)\s+\|\s+dur=([0-9.]+)s\s+\|\s+ttft=([0-9.]+s|N/A)\s+\|\s+thought=([\d,]+)\s+\|\s+total=([\d,]+)\s+\|\s+api_success=(True|False)\s+\|\s+output_valid=(True|False)", re.DOTALL)
+    block_pattern = re.compile(r"\[\d+/\d+\]\s+(.*?)\s+\|\s+word='([^']+)'\s+\|\s+iteration=(\d+)\s+\|\s+salt=([a-f0-9]+).*?(VALID|FAILED|TIMEOUT)\s+\|\s+dur=([0-9.]+)s\s+\|\s+ttft=([0-9.]+s|N/A)\s+\|\s+thought=([\d,]+)\s+\|\s+total=([\d,]+)\s+\|\s+api_success=(True|False)\s+\|\s+output_valid=(True|False)", re.DOTALL)
 
     strategies_map = {
         "Monolithic (No Schema)": "monolithic",
@@ -38,7 +38,9 @@ def salvage():
 
     strategy_results = {s: [] for s in results_metadata["metadata"]["strategies"]}
 
+    matched_blocks = 0
     for match in block_pattern.finditer(content):
+        matched_blocks += 1
         strat_display, word, it, salt, status, dur, ttft_str, thought_str, total_str, api_s, output_v = match.groups()
         strat_key = strategies_map.get(strat_display.strip(), strat_display.strip())
         
@@ -84,6 +86,13 @@ def salvage():
         if strat_key in strategy_results:
             strategy_results[strat_key].append(run_record)
             
+    if matched_blocks == 0:
+        print(
+            "WARNING: 0 run blocks matched in benchmark_live.log; "
+            "the generated summaries will be empty. Check that the log format "
+            "matches the expected '[N/M] Strategy | word=... | ...' pattern."
+        )
+
     # Import summarize_metrics now that it is fixed
     from compare_benchmarks import summarize_metrics, STRATEGIES
     
