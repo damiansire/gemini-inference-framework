@@ -16,7 +16,7 @@ aceptable.
 
 | Ruta | Responsabilidad |
 | --- | --- |
-| `strategies/<nombre>/runner.py` | Una estrategia de inferencia. Expone `run_<nombre>(word, salt=None, timeout=...)` y devuelve `(result, metrics)`. |
+| `strategies/<nombre>/runner.py` | Una estrategia de inferencia. Expone `run_<nombre>(word, salt=None, timeout=...)`; la version registrada devuelve un dict plano (ver "Contrato comun"). |
 | `strategies/output_validation.py` | Motor de asserts: valida y normaliza la salida del modelo. Devuelve `{"ok", "errors", "normalized"}`. Codigo de correccion: tratar como codigo de seguridad. |
 | `strategies/utils.py` | Cliente Gemini compartido, modelos, tarifas y `MetricsTracker`. |
 | `prompts.py` | Prompts por estrategia/etapa. |
@@ -38,13 +38,23 @@ directorio.
 
 ## Contrato comun de una strategy
 
-Toda strategy expone la misma firma y forma de resultado (hoy implicito; tratarlo
-como contrato):
+Toda strategy **registrada en `STRATEGIES`** expone la misma firma y devuelve un
+**dict plano** (no una tupla). Es lo que el orquestador consume: `_normalize_result`
+hace `result.get(...)` sobre ese dict (`compare_benchmarks.py`).
 
-- `async def run_<nombre>(word, salt=None, timeout=...) -> (result, metrics)`.
-- `result` debe pasar `validate_dictionary_output(...)` con los `expected_levels`
-  declarados para esa strategy en `STRATEGIES`.
-- `metrics` es un `MetricsTracker` (o equivalente) con tokens/duraciones.
+- `async def run_<nombre>(word, salt=None, timeout=...) -> dict`.
+- El `dict` lleva al menos: `success` (bool), `text_output` (la salida del modelo
+  que se valida), `duration`, `ttft`, `prompt_tokens`, `candidate_tokens`,
+  `thought_tokens`, `total_tokens`, `cost`, `timed_out`; en error, `error` (str)
+  con `success=False`.
+- `text_output` debe pasar `validate_dictionary_output(...)` con los
+  `expected_levels` declarados para esa strategy en `STRATEGIES`.
+
+> Nota: las **bases** `run_cascade`/`run_pipeline` (`strategies/cascade`,
+> `strategies/pipeline`) devuelven `(result, metrics)` con un `MetricsTracker`,
+> pero **no se registran directamente**: `compare_benchmarks.py` las envuelve en
+> el dict plano de arriba (`run_cascade_strategy`/`run_pipeline_strategy`). Lo que
+> se registra siempre es la version envuelta que devuelve dict.
 
 ## Definition of done: agregar una strategy nueva
 
@@ -54,8 +64,8 @@ como contrato):
 3. Prompts en `prompts.py`.
 4. Registro en `STRATEGIES` (`compare_benchmarks.py`) con `runner` y
    `expected_levels`.
-5. Test que valide que el `result` pasa `validate_dictionary_output` y, si la
-   strategy parsea o transforma salida, su rama adversarial.
+5. Test que valide que el `text_output` del dict pasa `validate_dictionary_output`
+   y, si la strategy parsea o transforma salida, su rama adversarial.
 
 ## Reglas duras
 
