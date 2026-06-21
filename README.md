@@ -6,20 +6,24 @@
 
 # Gemini Reasoning Explosion — Empirical Benchmark & Mitigation Suite
 
-> **TL;DR:** A Finnish dictionary prompt causes `gemini-3-flash-preview` to consume **62k+ thought tokens** and take **4 minutes 19 seconds**. We built a benchmark of **120 controlled API calls** across **8 architectural strategies** and found that a **Structured Cascade** architecture reduces this to **17.2s with 100% reliability** — keeping the same target task (the cascade rewrites the prompts into per-stage system messages rather than reusing the original prompt verbatim).
+> **TL;DR:**
+> - **Community-reported value (not reproduced here):** a Finnish dictionary prompt was reported by a third party to make `gemini-3-flash-preview` consume **62k+ thought tokens** over **4 minutes 19 seconds**. Our n=120 benchmark never reproduced an explosion of that magnitude — our Monolithic (No Schema) baseline measured ~2,648 avg / 4,498 max thought tokens at **22.0s**.
+> - **Our measurement:** across **120 runs** (8 strategies × 5 words × 3 iterations) we took that Monolithic baseline of **22.0s** down to **17.2s with 100% reliability** using a **Structured Cascade** architecture (which rewrites the prompts into per-stage system messages rather than reusing the original prompt verbatim).
 
 ---
 
 ## Context: The Problem
 
-This project originated from a [GenAI Circle discussion] reported extreme latency and token waste with `gemini-3-flash-preview`:
+This project originated from a [GenAI Circle discussion] reporting extreme latency and token waste with `gemini-3-flash-preview`. The figures below are the **community-reported anecdote** that motivated the work — they are **not** one of our measurements and were **not reproduced** in our n=120 benchmark:
 
-| Metric | Reported Value |
+| Metric | Reported Value (third-party, not reproduced) |
 |---|---|
 | Duration | **4 minutes 19 seconds** |
 | Input Tokens | ~3,400 |
 | Output Tokens | ~1,069 |
 | Thought Tokens | **62,910** |
+
+> Our own worst-case measured thought usage was far smaller (see the n=120 leaderboard below: max 18,144 thought tokens on Pipeline, 4,498 on the Monolithic baseline). We document the gap rather than claim the reported explosion as our result.
 
 The prompt generates structured JSON dictionary entries for Finnish words, requiring CEFR-leveled examples and phonological transformations to spoken Finnish (`spokenFi`). Our working hypothesis: the model enters **reasoning loops** due to competing constraints — strict JSON + creative generation + deterministic linguistic rules.
 
@@ -50,7 +54,7 @@ The prompt generates structured JSON dictionary entries for Finnish words, requi
 
 ### 1. Root Cause: Instruction Friction
 
-The 62k thought tokens emerge from three competing cognitive modes in a single prompt:
+The reported 62k-token spike (not reproduced in our runs, but consistent with the elevated thought usage we did measure) plausibly emerges from three competing cognitive modes in a single prompt:
 
 1. **Creative generation** — pedagogically appropriate CEFR-leveled Finnish sentences
 2. **Deterministic transformation** — 10 specific phonological rules for `spokenFi`
