@@ -1,0 +1,56 @@
+name: Deploy dashboard to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dashboard/**'
+      - 'benchmark_results/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+# Permisos mínimos para publicar en Pages con el source "GitHub Actions".
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un solo deploy a la vez; no cancela el que esté en curso.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # El dashboard es estático (no hay build). app.js carga el dataset con una
+      # ruta relativa `../benchmark_results/…`, así que el sitio debe servir
+      # `dashboard/` y `benchmark_results/` como hermanos. Una redirección en la
+      # raíz manda la URL base del Pages al dashboard.
+      - name: Assemble static site
+        run: |
+          mkdir -p _site/dashboard _site/benchmark_results
+          cp dashboard/index.html dashboard/app.js dashboard/index.css _site/dashboard/
+          cp benchmark_results/*.json _site/benchmark_results/
+          printf '%s\n' \
+            '<!doctype html><html lang="en"><head><meta charset="utf-8">' \
+            '<meta http-equiv="refresh" content="0; url=./dashboard/">' \
+            '<link rel="canonical" href="./dashboard/">' \
+            '<title>Gemini Inference Framework — Benchmark Dashboard</title>' \
+            '</head><body><a href="./dashboard/">Go to the dashboard &rarr;</a></body></html>' \
+            > _site/index.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
