@@ -1,0 +1,41 @@
+name: Link check
+
+# Valida que los badges y links del README (y demás .md) no estén rotos.
+# Previene el drift de badge mal apuntado / link muerto que se acumula en silencio.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.md'
+      - '.github/workflows/link-check.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/*.md'
+      - '.github/workflows/link-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check links in README and docs
+        uses: lycheeverse/lychee-action@v2
+        with:
+          # README es el objetivo principal; AGENTS.md acompaña.
+          # --exclude-loopback: ignora localhost/127.0.0.1 (ej. el http.server del dashboard).
+          # --accept 429: rate-limit de shields.io/GitHub no debe pintar el CI en rojo.
+          # Anclas internas (#) no se chequean salvo --include-fragments (off por defecto).
+          args: >-
+            --no-progress
+            --exclude-loopback
+            --accept '100..=103,200..=299,429'
+            README.md AGENTS.md
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

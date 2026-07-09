@@ -6,6 +6,13 @@
 
 # Gemini Reasoning Explosion — Empirical Benchmark & Mitigation Suite
 
+[![Dashboard deploy](https://github.com/damiansire/gemini-inference-framework/actions/workflows/deploy.yml/badge.svg)](https://github.com/damiansire/gemini-inference-framework/actions/workflows/deploy.yml)
+[![Live dashboard](https://img.shields.io/badge/live-dashboard-blue)](https://damiansire.github.io/gemini-inference-framework/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+> **Live benchmark dashboard:** <https://damiansire.github.io/gemini-inference-framework/>
+
 > **TL;DR:**
 > - **Community-reported value (not reproduced here):** a Finnish dictionary prompt was reported by a third party to make `gemini-3-flash-preview` consume **62k+ thought tokens** over **4 minutes 19 seconds**. Our n=120 benchmark never reproduced an explosion of that magnitude — our Monolithic (No Schema) baseline measured ~2,648 avg / 4,498 max thought tokens at **22.0s**.
 > - **Our measurement:** across **120 runs** (8 strategies × 5 words × 3 iterations) we took that Monolithic baseline of **22.0s** down to **17.2s with 100% reliability** using a **Structured Cascade** architecture (which rewrites the prompts into per-stage system messages rather than reusing the original prompt verbatim).
@@ -14,7 +21,7 @@
 
 ## Context: The Problem
 
-This project originated from a [GenAI Circle discussion] reporting extreme latency and token waste with `gemini-3-flash-preview`. The figures below are the **community-reported anecdote** that motivated the work — they are **not** one of our measurements and were **not reproduced** in our n=120 benchmark:
+This project originated from a GenAI Circle discussion reporting extreme latency and token waste with `gemini-3-flash-preview`. The figures below are the **community-reported anecdote** that motivated the work — they are **not** one of our measurements and were **not reproduced** in our n=120 benchmark:
 
 | Metric | Reported Value (third-party, not reproduced) |
 |---|---|
@@ -121,6 +128,8 @@ In **this monolithic prompt**, `thinking_level=LOW` produced the fastest results
 │   ├── pipeline/            # Sequential multi-stage  
 │   ├── thinking_budget/     # thinking_level=LOW cap
 │   ├── pro_model/           # gemini-3.1-pro-preview
+│   ├── providers.py         # Gemini client/provider setup
+│   ├── stage_assembly.py    # Assembles multi-stage output (assemble_examples)
 │   ├── output_validation.py # JSON + CEFR structure validator
 │   └── utils.py             # Shared: cost rates, metrics, API helpers
 ├── benchmark_results/       # Generated reports, raw JSON, drafts
@@ -135,8 +144,11 @@ In **this monolithic prompt**, `thinking_level=LOW` produced the fastest results
 ## Quick Start
 
 ```bash
-# 1. Install dependencies
-./venv/bin/pip install google-genai python-dotenv
+# 1. Create the virtualenv and install dependencies (from pyproject.toml)
+python -m venv venv
+./venv/bin/pip install -e .
+
+# Then copy .env.template to .env and set GOOGLE_API_KEY.
 
 # 2. Quick smoke test (1 word, 1 iteration)
 ./venv/bin/python compare_benchmarks.py --words silta --iterations 1
@@ -148,9 +160,10 @@ In **this monolithic prompt**, `thinking_level=LOW` produced the fastest results
   --strategies monolithic monolithic_schema optimized_monolithic lazy_optimized pipeline cascade thinking_budget pro_model \
   --iterations 3
 
-# 4. View dashboard
+# 4. View dashboard locally
 ./venv/bin/python -m http.server 8080
 # Open http://localhost:8080/dashboard/
+# (Or view the deployed version: https://damiansire.github.io/gemini-inference-framework/)
 ```
 
 ## Custom Runs
