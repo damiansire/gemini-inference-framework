@@ -1,6 +1,6 @@
 # Gemini Latency Benchmark Report
 
-Generated: 2026-04-10 16:33:40
+Generated: 2026-07-10 07:43:56
 Words: hana, kuusi, juosta, vanha, silta
 Iterations per strategy: 3
 Timeout per call: 180s
@@ -22,17 +22,17 @@ Models benchmarked: gemini-3-flash-preview, gemini-3.1-pro-preview
 ## Quality Gate
 
 All leaderboard metrics above are calculated only from runs whose recorded `output_valid` flag is true.
-In a live benchmark that flag comes from the output validator; this report was regenerated from logs via `salvage.py`, so the flag is read back from each run's logged value (the validator is not re-executed).
+In a live benchmark that flag comes from the output validator; in reports regenerated from logs via `salvage.py` it is read back from each run's logged flag (the validator is not re-executed).
 The validator checks JSON parseability, root shape, required keys, CEFR level coverage, and a headword policy that rejects obvious grammatical-form collisions.
 
 Cost is an estimate, not a billed figure: it multiplies token counts by the model's published per-million rates.
-When a report is regenerated from logs, the input/output token split is not in the log and is approximated by a heuristic in `salvage.py`, so the cost column here is doubly estimated.
+When a report is regenerated from logs, the input/output token split is not in the log and is approximated by a heuristic in `salvage.py`, so the cost column there is doubly estimated.
 
 ## Strategy Notes
 
 - Lazy Optimized is the fastest partial-output strategy at 16.14s average latency.
-- The fastest fully valid strategy is Lazy Optimized (A1-B1) at 16.14s average latency (+/-8.58s).
-- Latency is averaged over a small n per strategy with wide LLM-side variance; treat sub-second gaps between the top strategies as within the margin, not a clear winner. Lazy Optimized (16.14 +/-8.58s) and Structured Cascade (17.23 +/-4.30s) overlap heavily.
+- The fastest fully valid strategy is Structured Cascade at 17.23s average latency (+/-4.30s).
+- Latency is averaged over a small n per strategy with wide LLM-side variance; treat sub-second gaps between the top strategies as within the margin, not a clear winner.
 - Outside the lazy variant, the lowest-latency approach is Thinking Budget (LOW).
 - Schema enforcement changed average thought-token usage by +52.9% versus the monolithic baseline.
 
