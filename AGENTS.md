@@ -105,9 +105,16 @@ corpus de `/fragua`, `~/.claude/tools/_audit-tools/refs/architecture/`):
 - **Validacion adversarial, no solo happy path** (ya cubierto arriba en
   "Reglas duras" y "Definition of done" — es el mismo principio que el item g
   del corpus: el estado queda consistente o el error es explicito, nunca a medias).
-- **README con prueba real, no solo claim** (item l): la metrica 22.0s->17.2s
-  que encabeza el README tiene que seguir respaldada por `tests/` + el `ci.yml`
-  que la gatea (ya asi desde `48fc90b`); si cambia el numero, cambia el test.
+- **README con prueba real, no solo claim** (item l) — **VIOLADO hoy, no
+  resuelto todavia**: la metrica 22.0s->17.2s que encabeza el README NO esta
+  gateada por nada. `ci.yml` corre pytest+ruff, pero la suite es 100%
+  offline/mock (`net_latency_s` hardcodeado) y ningun test toca ese numero;
+  `48fc90b` gatea la suite en general, no esta cifra en particular. Confirmado
+  por auditoria real (`/fragua evaluar`, 2026-07-10, veredicto REJECT). Hasta
+  que exista un test de regresion sobre un snapshot congelado que recompute la
+  metrica via `summarize_metrics` (o el README diga explicitamente "corrida
+  manual n=120, no gateada por CI"), NO afirmar en este archivo que esta
+  respaldada — la version anterior de este parrafo lo afirmaba y era falso.
 
 Gap de corpus conocido: `/fragua` todavia no tiene una nota `refs/python/`
 (el enum de stacks cubre angular/react/rust/tauri/discord/creative/genai/
