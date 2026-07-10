@@ -1,0 +1,55 @@
+name: CI
+
+# Corre la suite real (pytest) y el linter (ruff) en cada push y PR a main,
+# GATEANDO: si un test o el lint falla, el job falla y bloquea el merge.
+#
+# Sin secretos: toda la suite es determinista y offline. Los runners hablan con
+# Gemini a traves de un `InferenceProvider` inyectable (strategies/providers.py)
+# y los tests sustituyen un provider MOCK (test_concurrency) o parchean
+# `generate_content_*` (test_runner_error_handling); el validador
+# (test_output_validation) no toca red. Ningun test requiere GOOGLE_API_KEY, asi
+# que NO se define ningun secret aca y NADA queda skippeado por credenciales.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # cpython-312: el interprete con el que se desarrolla el repo (los .pyc son
+      # cpython-312 y pyproject apunta target-version py310, pero se fija 3.12).
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      # Instala el proyecto + herramientas de dev (pytest, ruff) declaradas en el
+      # extra `dev` de pyproject.toml. Editable para que la suite importe el
+      # paquete instalado.
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+
+      # Lint + format ya estaban configurados en pyproject (ruff con B/C4/E/F/S/
+      # I/SIM/UP/W + flake8-bandit por las API keys). Se gatean; no se inventa un
+      # linter nuevo.
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Format check (ruff)
+        run: ruff format --check .
+
+      # La suite completa. -ra ya viene de addopts en pyproject.
+      - name: Tests (pytest)
+        run: python -m pytest

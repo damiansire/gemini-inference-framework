@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "gemini-inference-framework"
 version = "0.1.0"
@@ -12,9 +16,28 @@ dependencies = [
     "python-dotenv>=1.0",
 ]
 
+# Herramientas de desarrollo/CI: pytest para la suite, ruff para lint+format.
+# Se instalan con `pip install -e .[dev]` (lo que corre el gate de CI).
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "ruff>=0.15",
+]
+
 [project.urls]
 Repository = "https://github.com/damiansire/gemini-inference-framework"
 Homepage = "https://github.com/damiansire/gemini-inference-framework"
+
+# El repo es un flat-layout (scripts en la raiz + paquete `strategies`), no un
+# src-layout. La autodeteccion de setuptools falla porque `dashboard/` y
+# `benchmark_results/` son directorios hermanos que NO son codigo Python; por eso
+# se declara explicito que se empaqueta: el paquete `strategies` (con sus
+# subpaquetes) y los modulos de nivel raiz que forman el framework.
+[tool.setuptools]
+py-modules = ["prompts", "compare_benchmarks", "salvage", "measure_concurrency_fase2"]
+
+[tool.setuptools.packages.find]
+include = ["strategies*"]
 
 [tool.pytest.ini_options]
 # Orden aleatorio fuerza independencia entre tests; los timeouts se arreglan
