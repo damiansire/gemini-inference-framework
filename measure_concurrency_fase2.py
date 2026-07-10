@@ -23,7 +23,7 @@ trafico real).
 
 import asyncio
 
-from strategies import utils
+from strategies import multistage, utils
 from strategies.cascade import runner as cascade_runner
 from strategies.pipeline import runner as pipeline_runner
 
@@ -114,12 +114,13 @@ def make_mock(tracker, num_meanings, net_latency_s=0.02):
 def patch_all(mock):
     """Parchea generate_content_sync donde lo consumen.
 
-    Los runners hacen `from ..utils import generate_content_sync`, asi que el
-    nombre quedo ligado en el modulo del runner: hay que parchear ahi tambien.
+    cascade/runner.py y pipeline/runner.py ya no llaman a generate_content_sync
+    directo (viven en strategies/multistage.py, que hizo
+    `from .utils import generate_content_sync`): el nombre quedo ligado ahi, asi
+    que ese es el modulo real a parchear, no los runners.
     """
     utils.generate_content_sync = mock
-    cascade_runner.generate_content_sync = mock
-    pipeline_runner.generate_content_sync = mock
+    multistage.generate_content_sync = mock
 
 
 async def measure_cascade(num_meanings):
