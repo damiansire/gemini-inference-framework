@@ -31,8 +31,9 @@ jobs:
       # raíz manda la URL base del Pages al dashboard.
       - name: Assemble static site
         run: |
-          mkdir -p _site/dashboard _site/benchmark_results
+          mkdir -p _site/dashboard/vendor _site/benchmark_results
           cp dashboard/index.html dashboard/app.js dashboard/index.css _site/dashboard/
+          cp dashboard/vendor/chart.umd.min.js _site/dashboard/vendor/
           cp benchmark_results/*.json _site/benchmark_results/
           printf '%s\n' \
             '<!doctype html><html lang="en"><head><meta charset="utf-8">' \
