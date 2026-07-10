@@ -51,6 +51,8 @@ The prompt generates structured JSON dictionary entries for Finnish words, requi
 | Pro Model (3.1) | 54.7s ±10.6s | 4,822 | 7,420 | **$0.0340** 💸 | 86.7% | 13.3% |
 | **Pipeline (Multi-stage)** | **152.9s** ±74.0s 🐌 | **10,713** | **18,144** | $0.0049 | 93.3% | 6.7% |
 
+> **How this table is verified:** the 22.0s → 17.2s figures come from a **manual n=120 run**, not a CI-gated benchmark — `ci.yml` runs pytest+ruff against a fully offline/mocked provider (deterministic, zero network calls) and does not re-run or assert on live latency numbers. What CI *does* gate is the logic that decides which strategy is reported as "fastest fully valid" (`tests/test_compare_benchmarks.py`) — so the selection can't silently regress, even though the raw timing itself can drift between runs and isn't re-verified automatically.
+>
 > **Test words:** `hana`, `kuusi`, `juosta`, `vanha`, `silta` — deliberately chosen for varying lexical ambiguity (hana = 3+ meanings vs. silta = 1 clear meaning).
 >
 > **On ranking:** each strategy is averaged over only n=15 runs with wide LLM-side variance. Sub-second gaps between adjacent strategies are within the margin, not a clear ordering — e.g. Lazy Optimized (16.1 ±8.6s) and Structured Cascade (17.2 ±4.3s) overlap heavily. Cost is an estimate (token counts × published rates), not a billed figure.
