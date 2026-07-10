@@ -296,10 +296,16 @@ def _pick_fastest(summaries, exclude=None):
 
 
 def _pick_best_quality_speed(summaries):
+    # "Fully valid" must mean the strategy targets the full level range, not just
+    # a 1.0 valid_output_rate against its OWN (possibly partial) expected_levels
+    # — otherwise a strategy that only ever attempts a subset (e.g. lazy_optimized,
+    # A1-B1) reads as "fully valid" for trivially covering its narrower contract.
     candidates = [
         (key, value)
         for key, value in summaries.items()
-        if value["successful_runs"] > 0 and value["valid_output_rate"] >= 1.0
+        if value["successful_runs"] > 0
+        and value["valid_output_rate"] >= 1.0
+        and STRATEGIES[key]["expected_levels"] == FULL_LEVELS
     ]
     if not candidates:
         return None
