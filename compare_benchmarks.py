@@ -581,6 +581,17 @@ async def main():
     )
     print("=" * 70)
 
+    # Fail-fast, not fail-eventually: without this, a missing key survives
+    # warmup() (which swallows any exception) and only surfaces ~120 tasks
+    # later as a wall of per-task tracebacks -- the opposite of the repo's
+    # own "fail-fast with explicit limits" standard.
+    if not os.environ.get("GOOGLE_API_KEY"):
+        print(
+            "\nGOOGLE_API_KEY is not set. Copy .env.template to .env and fill in a real key:\n"
+            "  cp .env.template .env\n"
+        )
+        raise SystemExit(1)
+
     os.makedirs(RESULTS_DIR, exist_ok=True)
 
     all_results = {

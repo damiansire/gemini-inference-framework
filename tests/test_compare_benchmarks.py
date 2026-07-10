@@ -6,9 +6,12 @@ test, pese a ser exactamente lo que un benchmark de latencia vende como su
 producto. Hallazgo de /fragua evaluar 2026-07-10 (veredicto REJECT).
 """
 
+import asyncio
 import json
 
-from compare_benchmarks import _normalize_result, _pick_best_quality_speed, summarize_metrics
+import pytest
+
+from compare_benchmarks import _normalize_result, _pick_best_quality_speed, main, summarize_metrics
 
 
 def _valid_payload():
@@ -194,3 +197,15 @@ def test_summarize_metrics_mix_valido_api_only_y_timeout():
     assert summary["timeout_runs"] == 1
     assert summary["failure_rate"] == 2 / 3
     assert summary["valid_output_rate"] == 1 / 3
+
+
+# --- main(): preflight fail-fast si falta GOOGLE_API_KEY ----------------------
+
+
+def test_main_aborta_de_una_si_falta_google_api_key(monkeypatch, capsys):
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    monkeypatch.setattr("sys.argv", ["compare_benchmarks.py", "--words", "hana"])
+    with pytest.raises(SystemExit) as exc_info:
+        asyncio.run(main())
+    assert exc_info.value.code == 1
+    assert "GOOGLE_API_KEY" in capsys.readouterr().out
