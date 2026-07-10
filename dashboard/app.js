@@ -487,6 +487,16 @@ function renderRunsGrid(data, filters = {}) {
         return;
     }
 
+    // Built with createElement + textContent, never innerHTML: strategy_name,
+    // word and error are derived from LLM output (via output_validation) and
+    // must be treated as untrusted, same as renderComparisonTable already does.
+    const metricSpec = [
+        ['Latency', run => `${run.duration.toFixed(1)}s`],
+        ['Thought', run => run.thought_tokens.toLocaleString()],
+        ['Total', run => run.total_tokens.toLocaleString()],
+        ['Cost', run => `$${run.cost.toFixed(5)}`],
+    ];
+
     runs.forEach(run => {
         const card = document.createElement('div');
         card.className = `run-card ${!run.success ? (run.timed_out ? 'timeout' : 'failed') : ''}`;
@@ -494,32 +504,47 @@ function renderRunsGrid(data, filters = {}) {
         const statusClass = run.success ? 'success' : 'fail';
         const statusText = run.success ? '✓ OK' : (run.timed_out ? '⏰ TIMEOUT' : '✗ ERROR');
 
-        card.innerHTML = `
-            <div class="run-header">
-                <span class="run-strategy">${run.strategy_name}</span>
-                <span class="run-status ${statusClass}">${statusText}</span>
-            </div>
-            <div class="run-word">Word: "${run.word}" · Iteration ${run.iteration}</div>
-            <div class="run-metrics">
-                <div class="run-metric">
-                    <span class="run-metric-label">Latency</span>
-                    <span class="run-metric-value">${run.duration.toFixed(1)}s</span>
-                </div>
-                <div class="run-metric">
-                    <span class="run-metric-label">Thought</span>
-                    <span class="run-metric-value">${run.thought_tokens.toLocaleString()}</span>
-                </div>
-                <div class="run-metric">
-                    <span class="run-metric-label">Total</span>
-                    <span class="run-metric-value">${run.total_tokens.toLocaleString()}</span>
-                </div>
-                <div class="run-metric">
-                    <span class="run-metric-label">Cost</span>
-                    <span class="run-metric-value">$${run.cost.toFixed(5)}</span>
-                </div>
-            </div>
-            ${run.error ? `<div style="margin-top:0.5rem;font-size:0.7rem;color:var(--accent-rose);word-break:break-all;">${run.error.substring(0, 120)}</div>` : ''}
-        `;
+        const header = document.createElement('div');
+        header.className = 'run-header';
+        const strategySpan = document.createElement('span');
+        strategySpan.className = 'run-strategy';
+        strategySpan.textContent = run.strategy_name;
+        const statusSpan = document.createElement('span');
+        statusSpan.className = `run-status ${statusClass}`;
+        statusSpan.textContent = statusText;
+        header.append(strategySpan, statusSpan);
+
+        const wordDiv = document.createElement('div');
+        wordDiv.className = 'run-word';
+        wordDiv.textContent = `Word: "${run.word}" · Iteration ${run.iteration}`;
+
+        const metricsDiv = document.createElement('div');
+        metricsDiv.className = 'run-metrics';
+        for (const [label, format] of metricSpec) {
+            const metric = document.createElement('div');
+            metric.className = 'run-metric';
+            const labelSpan = document.createElement('span');
+            labelSpan.className = 'run-metric-label';
+            labelSpan.textContent = label;
+            const valueSpan = document.createElement('span');
+            valueSpan.className = 'run-metric-value';
+            valueSpan.textContent = format(run);
+            metric.append(labelSpan, valueSpan);
+            metricsDiv.appendChild(metric);
+        }
+
+        card.append(header, wordDiv, metricsDiv);
+
+        if (run.error) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.marginTop = '0.5rem';
+            errorDiv.style.fontSize = '0.7rem';
+            errorDiv.style.color = 'var(--accent-rose)';
+            errorDiv.style.wordBreak = 'break-all';
+            errorDiv.textContent = run.error.substring(0, 120);
+            card.appendChild(errorDiv);
+        }
+
         grid.appendChild(card);
     });
 }
