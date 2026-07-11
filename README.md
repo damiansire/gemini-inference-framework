@@ -85,6 +85,12 @@ The **Structured Cascade** decomposes the task into 3 specialized stages with pe
 
 **Result:** 17.2s average with **100% success rate** across all 15 runs. Each meaning is processed in parallel via `asyncio.gather`; within a single meaning, Stage 2 → Stage 3 runs sequentially because Stage 3 transforms Stage 2's output.
 
+> **On "parallel":** every mention of "parallel"/"concurrent" in this README refers to
+> **async I/O orchestration** (`asyncio.gather` over concurrent network calls to the
+> Gemini API), not CPU-bound compute parallelism. The 8 strategies compared are
+> different ways of sequencing and batching those network calls — none of them do
+> multi-threaded or multi-process computation.
+
 ### 3. Pipeline is an Anti-Pattern
 
 The most counterintuitive finding: **Pipeline (sequential multi-stage) is the worst strategy at 152.9s**. Without thinking controls, Stage 3 (spokenFi) enters 45-second reasoning spirals on every meaning, one at a time. Cascade avoids this by capping Stage 3's thinking to `MINIMAL` and running meanings in parallel.
