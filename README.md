@@ -198,6 +198,68 @@ python -m venv venv
 
 ---
 
+## CI, provider pluggability, and real load testing
+
+### `ci.yml` vs `live-eval.yml`
+
+`ci.yml` (pytest + ruff) is **100% offline/mocked** by design (see its own
+header comment) — it gates every push/PR without needing a secret or spending
+real money. `.github/workflows/live-eval.yml` is the complement: a
+**manual-dispatch + weekly** job that pegs a cheap subset (1 word, 1
+iteration, the lightest strategy) against the **real, paid** Gemini API and
+uploads the result as a workflow artifact, to catch drift a mock can never
+show (real latency, real schema/response shape changes). It does **not** gate
+merges — a transient 429 or a slow week shouldn't block a PR.
+
+It requires a `GOOGLE_API_KEY` **repository secret** (Settings → Secrets and
+variables → Actions) — configuring it is a one-time step only the repo owner
+can do (same reasoning as `NPM_TOKEN` in the release pipelines: it's a
+credential tied to a personal account). Without the secret the job fails
+fast with a clear message instead of hanging or dumping a raw traceback —
+verified locally by running `compare_benchmarks.py` with `GOOGLE_API_KEY`/
+`GEMINI_API_KEY` both absent from the environment: exit code 1, message
+`GOOGLE_API_KEY is not set. Copy .env.template to .env and fill in a real
+key`.
+
+### Provider pluggability (`strategies/providers.py`)
+
+The framework does not talk to `google.genai` directly: every runner goes
+through `utils.get_provider()`, which returns an `InferenceProvider`
+(`Protocol`, structurally typed — no base class required). `GeminiProvider`
+is the only production implementation today, but `utils.set_provider(...)`
+lets any object satisfying the two-method protocol
+(`generate_content`/`generate_content_stream`) replace it without touching a
+single strategy runner.
+
+`tests/test_providers.py` proves this with a **mock second-backend
+provider** (`SecondBackendProvider`, structurally unrelated to
+`GeminiProvider`) run end-to-end through `run_monolithic_schema`: the dict
+contract and `validate_dictionary_output` both pass against it, same as
+against the real Gemini path. What this does **not** cover: a real paid
+second vendor (OpenAI/Anthropic/etc.). That's pending a second API key; once
+available, the remaining work is a concrete adapter class implementing
+`InferenceProvider` for that SDK, injected via `utils.set_provider(...)`
+before a normal `compare_benchmarks.py` run — no strategy code changes.
+
+### Real concurrent-load benchmark (`measure_concurrency_real.py`)
+
+`measure_concurrency_fase2.py` measures **structural** concurrency (in-flight
+call count) against a mocked provider — useful for verifying the Semaphore
+cap, useless for real latency under load. `measure_concurrency_real.py`
+fires N real simultaneous calls (`asyncio.gather`, N configurable via
+`--concurrency`, 10–20 per gif-adn-2) at the live API and reports real
+p50/p95/p99 latency:
+
+```bash
+python measure_concurrency_real.py --concurrency 15
+```
+
+It raises `GEMINI_MAX_CONCURRENCY` to match `--concurrency` before running so
+the shared Semaphore (default 5) doesn't silently throttle the requested
+load. Results are saved to `benchmark_results/concurrency_load_data.json`.
+
+---
+
 ## Requirements
 
 - Python 3.10+

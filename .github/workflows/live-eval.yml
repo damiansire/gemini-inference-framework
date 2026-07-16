@@ -1,0 +1,63 @@
+name: Live eval (real API)
+
+# gif-4: ci.yml corre 100% offline/mockeado (por diseno, ver su comment
+# header). Este job es el complemento: pega DE VERDAD a la API paga de Gemini
+# para detectar drift real (cambios de latencia/costo/formato de respuesta del
+# modelo) que un mock nunca va a mostrar. Deliberadamente NO gatea PRs (no
+# queremos que un 429 transitorio o una corrida cara bloquee un merge) y
+# corre un subconjunto barato: 1 palabra x 1 iteracion x 1 estrategia (la mas
+# liviana, optimized_monolithic), no el corpus completo.
+#
+# Requiere el secret GOOGLE_API_KEY configurado en el repo (Settings > Secrets
+# and variables > Actions). Sin el secret, el job FALLA rapido con un mensaje
+# claro (compare_benchmarks.py hace fail-fast si falta la key, ver
+# `main()` en compare_benchmarks.py) en vez de una corrida colgada o un
+# traceback opaco -- verificado localmente (sin GOOGLE_API_KEY/GEMINI_API_KEY
+# en el entorno, exit code 1 con el mensaje de abajo).
+#
+# Configurar el secret es responsabilidad de Damian (credencial de su cuenta),
+# no de un agente -- mismo criterio que NPM_TOKEN en release-npm-changesets.
+on:
+  workflow_dispatch:
+  schedule:
+    # Semanal: suficiente para pescar drift sin gastar la cuota/plata a diario.
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  live-eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+
+      # Subconjunto barato a proposito (ver comment del job): no es el
+      # benchmark completo, es un canario contra la API real.
+      - name: Run live subset against real Gemini API
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          python compare_benchmarks.py \
+            --words hana \
+            --iterations 1 \
+            --strategies optimized_monolithic \
+            --output live_eval_data.json
+
+      - name: Upload result as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-eval-result
+          path: benchmark_results/live_eval_data.json
+          retention-days: 90
