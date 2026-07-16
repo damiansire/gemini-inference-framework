@@ -20,9 +20,11 @@ aceptable.
 | `strategies/output_validation.py` | Motor de asserts: valida y normaliza la salida del modelo. Devuelve `{"ok", "errors", "normalized"}`. Codigo de correccion: tratar como codigo de seguridad. |
 | `strategies/utils.py` | Cliente Gemini compartido, modelos, tarifas y `MetricsTracker`. |
 | `prompts.py` | Prompts por estrategia/etapa. |
-| `compare_benchmarks.py` | Registro `STRATEGIES` + orquestacion del benchmark y reporte. |
-| `salvage.py` | Recuperacion de resultados desde logs. |
-| `tests/` | Tests con pytest. `test_output_validation.py` cubre el validador adversarialmente. |
+| `scripts/compare_benchmarks.py` | Registro `STRATEGIES` + orquestacion del benchmark y reporte. Se corre `python -m scripts.compare_benchmarks`. |
+| `scripts/salvage.py` | Recuperacion de resultados desde logs. |
+| `scripts/measure_concurrency_*.py`, `scripts/merge_extended_corpus.py` | Mediciones puntuales y merge one-off de datasets. |
+| `benchmarks/` | Harness de replay deterministico (fixtures versionadas, `ReplayProvider`, `python -m benchmarks.run --check` = gate nightly de latencia relativa via `bench.yml`). |
+| `tests/` | Tests con pytest. `test_output_validation.py` cubre el validador adversarialmente; `test_strategy_<nombre>.py` (uno por estrategia registrada, 8/8) cubre contrato + validez de salida contra el `ReplayProvider`. |
 | `dashboard/` | UI estatica para visualizar resultados. |
 
 Leer el AGENTS.md local relevante cuando exista al trabajar dentro de un
@@ -40,7 +42,7 @@ directorio.
 
 Toda strategy **registrada en `STRATEGIES`** expone la misma firma y devuelve un
 **dict plano** (no una tupla). Es lo que el orquestador consume: `_normalize_result`
-hace `result.get(...)` sobre ese dict (`compare_benchmarks.py`).
+hace `result.get(...)` sobre ese dict (`scripts/compare_benchmarks.py`).
 
 - `async def run_<nombre>(word, salt=None, timeout=...) -> dict`.
 - El `dict` lleva al menos: `success` (bool), `text_output` (la salida del modelo
@@ -52,7 +54,7 @@ hace `result.get(...)` sobre ese dict (`compare_benchmarks.py`).
 
 > Nota: las **bases** `run_cascade`/`run_pipeline` (`strategies/cascade`,
 > `strategies/pipeline`) devuelven `(result, metrics)` con un `MetricsTracker`,
-> pero **no se registran directamente**: `compare_benchmarks.py` las envuelve en
+> pero **no se registran directamente**: `scripts/compare_benchmarks.py` las envuelve en
 > el dict plano de arriba (`run_cascade_strategy`/`run_pipeline_strategy`). Lo que
 > se registra siempre es la version envuelta que devuelve dict.
 
@@ -62,10 +64,15 @@ hace `result.get(...)` sobre ese dict (`compare_benchmarks.py`).
    que respeta el contrato comun.
 2. `strategies/<nombre>/__init__.py`.
 3. Prompts en `prompts.py`.
-4. Registro en `STRATEGIES` (`compare_benchmarks.py`) con `runner` y
+4. Registro en `STRATEGIES` (`scripts/compare_benchmarks.py`) con `runner` y
    `expected_levels`.
-5. Test que valide que el `text_output` del dict pasa `validate_dictionary_output`
-   y, si la strategy parsea o transforma salida, su rama adversarial.
+5. `tests/test_strategy_<nombre>.py` propio (la convencion es 1 archivo por
+   estrategia registrada) que valide que el `text_output` del dict pasa
+   `validate_dictionary_output` y, si la strategy parsea o transforma salida,
+   su rama adversarial.
+6. Entrada en la fixture de replay (`python -m benchmarks.generate_fixture`
+   la regenera desde los datasets; sin corridas reales de la estrategia nueva
+   no hay fixture, y el harness `benchmarks/run.py` falla explicito).
 
 ## Reglas duras
 
@@ -105,16 +112,19 @@ corpus de `/fragua`, `~/.claude/tools/_audit-tools/refs/architecture/`):
 - **Validacion adversarial, no solo happy path** (ya cubierto arriba en
   "Reglas duras" y "Definition of done" — es el mismo principio que el item g
   del corpus: el estado queda consistente o el error es explicito, nunca a medias).
-- **README con prueba real, no solo claim** (item l) — **VIOLADO hoy, no
-  resuelto todavia**: la metrica 22.0s->17.2s que encabeza el README NO esta
-  gateada por nada. `ci.yml` corre pytest+ruff, pero la suite es 100%
-  offline/mock (`net_latency_s` hardcodeado) y ningun test toca ese numero;
-  `48fc90b` gatea la suite en general, no esta cifra en particular. Confirmado
-  por auditoria real (`/fragua evaluar`, 2026-07-10, veredicto REJECT). Hasta
-  que exista un test de regresion sobre un snapshot congelado que recompute la
-  metrica via `summarize_metrics` (o el README diga explicitamente "corrida
-  manual n=120, no gateada por CI"), NO afirmar en este archivo que esta
-  respaldada — la version anterior de este parrafo lo afirmaba y era falso.
+- **README con prueba real, no solo claim** (item l), estado 2026-07-16:
+  el claim ya no se afirma como verificado. El README etiqueta la metrica
+  22.0s->17.2s como "resultado historico de una corrida manual n=120,
+  pendiente de verificacion CI-gated contra la API viva", y lo que SI queda
+  gateado ejecutablemente es: (a) la logica de seleccion del ganador
+  (`tests/test_compare_benchmarks.py`), (b) contrato + validez de salida por
+  estrategia (`tests/test_strategy_*.py`, 8/8), y (c) el perfil de latencia
+  RELATIVO del codigo de orquestacion via el harness de replay
+  (`benchmarks/` + `bench.yml` nightly, falla si el p50 relativo se corre
+  mas de +/-25% del esperado versionado). Lo que sigue SIN gate: los numeros
+  absolutos contra la API viva (live-eval.yml los muestrea semanal pero no
+  gatea). NO volver a subir el claim a "verificado" hasta que exista esa
+  verificacion live gateada.
 
 Gap de corpus conocido: `/fragua` todavia no tiene una nota `refs/python/`
 (el enum de stacks cubre angular/react/rust/tauri/discord/creative/genai/

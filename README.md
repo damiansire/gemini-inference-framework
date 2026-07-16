@@ -4,7 +4,9 @@
 | Status     | Pending peer review |
 
 
-# Gemini Reasoning Explosion — Empirical Benchmark & Mitigation Suite
+# gemini-inference-framework
+
+Empirical benchmark and mitigation suite for the Gemini "reasoning explosion" on structured generation.
 
 [![Dashboard deploy](https://github.com/damiansire/gemini-inference-framework/actions/workflows/deploy.yml/badge.svg)](https://github.com/damiansire/gemini-inference-framework/actions/workflows/deploy.yml)
 [![Live dashboard](https://img.shields.io/badge/live-dashboard-blue)](https://damiansire.github.io/gemini-inference-framework/)
@@ -14,8 +16,8 @@
 > **Live benchmark dashboard:** <https://damiansire.github.io/gemini-inference-framework/>
 
 > **TL;DR:**
-> - **Community-reported value (not reproduced here):** a Finnish dictionary prompt was reported by a third party to make `gemini-3-flash-preview` consume **62k+ thought tokens** over **4 minutes 19 seconds**. Our n=120 benchmark never reproduced an explosion of that magnitude — our Monolithic (No Schema) baseline measured ~2,648 avg / 4,498 max thought tokens at **22.0s**.
-> - **Our measurement:** across **120 runs** (8 strategies × 5 words × 3 iterations) we took that Monolithic baseline of **22.0s** down to **17.2s with 100% reliability** using a **Structured Cascade** architecture (which rewrites the prompts into per-stage system messages rather than reusing the original prompt verbatim).
+> - **Community-reported value (not reproduced here):** a Finnish dictionary prompt was reported by a third party to make `gemini-3-flash-preview` consume **62k+ thought tokens** over **4 minutes 19 seconds**. Our n=120 benchmark never reproduced an explosion of that magnitude: our Monolithic (No Schema) baseline measured ~2,648 avg / 4,498 max thought tokens at 22.0s.
+> - **Historical result (manual n=120 run, pending CI-gated live verification):** across 120 runs (8 strategies x 5 words x 3 iterations) the Monolithic baseline went from 22.0s to 17.2s with 100% reliability using a **Structured Cascade** architecture (which rewrites the prompts into per-stage system messages rather than reusing the original prompt verbatim). These figures come from a one-off manual run against the live API; no CI job re-measures them yet. What CI does gate today: the selection logic that crowns the winner, the output quality gate, and (via the replay harness in `benchmarks/`) the relative latency profile of the strategy orchestration code.
 
 ---
 
@@ -36,9 +38,9 @@ The prompt generates structured JSON dictionary entries for Finnish words, requi
 
 ---
 
-## Benchmark Results (n=120)
+## Benchmark Results (historical, manual n=120 run)
 
-**8 strategies × 5 words × 3 iterations** — with UUID+epoch cache busting, randomized execution order, model warmup, and structural output validation.
+**8 strategies x 5 words x 3 iterations**, with UUID+epoch cache busting, randomized execution order, model warmup, and structural output validation. Every number in this table is a **historical result from a manual n=120 run, pending CI-gated live verification**: treat it as the recorded snapshot the repo ships, not as a continuously re-measured guarantee.
 
 | Strategy | Avg Latency (±std) | Avg Thought Tokens | Max Thought | Avg Cost (USD, est.) | Success Rate | Failure Rate |
 |---|---|---|---|---|---|---|
@@ -51,7 +53,7 @@ The prompt generates structured JSON dictionary entries for Finnish words, requi
 | Pro Model (3.1) | 54.7s ±10.6s | 4,822 | 7,420 | **$0.0340** 💸 | 86.7% | 13.3% |
 | **Pipeline (Multi-stage)** | **152.9s** ±74.0s 🐌 | **10,713** | **18,144** | $0.0049 | 93.3% | 6.7% |
 
-> **How this table is verified:** the 22.0s → 17.2s figures come from a **manual n=120 run**, not a CI-gated benchmark — `ci.yml` runs pytest+ruff against a fully offline/mocked provider (deterministic, zero network calls) and does not re-run or assert on live latency numbers. What CI *does* gate is the logic that decides which strategy is reported as "fastest fully valid" (`tests/test_compare_benchmarks.py`) — so the selection can't silently regress, even though the raw timing itself can drift between runs and isn't re-verified automatically.
+> **How this table is verified:** the 22.0s to 17.2s figures come from a **manual n=120 run**, not a CI-gated benchmark. `ci.yml` runs pytest+ruff against a fully offline/mocked provider (deterministic, zero network calls) and does not re-run or assert on live latency numbers. What IS gated automatically today: (1) the logic that decides which strategy is reported as "fastest fully valid" (`tests/test_compare_benchmarks.py`), (2) one test file per strategy asserting contract + output validity (`tests/test_strategy_*.py`), and (3) the **replay benchmark gate** (`benchmarks/` + `.github/workflows/bench.yml`): a nightly job re-runs all 8 strategies against a deterministic replay provider built from the recorded runs and fails if any strategy's relative p50 latency drifts beyond a defined threshold. The replay gate protects the orchestration code and the relative ordering; it does NOT re-verify the absolute live-API numbers, which remain pending live re-verification.
 >
 > **Test words:** `hana`, `kuusi`, `juosta`, `vanha`, `silta` — deliberately chosen for varying lexical ambiguity (hana = 3+ meanings vs. silta = 1 clear meaning).
 >
@@ -83,7 +85,7 @@ The **Structured Cascade** decomposes the task into 3 specialized stages with pe
 | Stage 2 | Generate CEFR examples (per meaning) | `LOW` | 0.7 |
 | Stage 3 | SpokenFi transformation (per meaning, after Stage 2) | `MINIMAL` | 0.0 |
 
-**Result:** 17.2s average with **100% success rate** across all 15 runs. Each meaning is processed in parallel via `asyncio.gather`; within a single meaning, Stage 2 → Stage 3 runs sequentially because Stage 3 transforms Stage 2's output.
+**Result (historical n=120 run, pending CI-gated live verification):** 17.2s average with 100% success rate across all 15 runs. Each meaning is processed in parallel via `asyncio.gather`; within a single meaning, Stage 2 runs before Stage 3 because Stage 3 transforms Stage 2's output.
 
 > **On "parallel":** every mention of "parallel"/"concurrent" in this README refers to
 > **async I/O orchestration** (`asyncio.gather` over concurrent network calls to the
@@ -115,7 +117,7 @@ In **this monolithic prompt**, `thinking_level=LOW` produced the fastest results
 | 2 | Monolithic (Strict Schema) | API-level `response_schema` enforcement | +31% latency vs baseline due to schema compliance overhead |
 | 3 | Optimized Monolithic | Shorter prompt with Few-Shot patterns | Fast but 26.7% failure rate |
 | 4 | Lazy Optimized (A1-B1) | Only generates 3 CEFR levels instead of 6 | Best cost/performance for partial output |
-| 5 | **Structured Cascade** | Per-stage thinking + parallel execution | **Production pick — 17.2s ±4.3s, 100% success (within the margin of the top fully-valid strategies)** |
+| 5 | **Structured Cascade** | Per-stage thinking + parallel execution | **Production pick: 17.2s ±4.3s, 100% success in the historical run (within the margin of the top fully-valid strategies)** |
 | 6 | Pipeline (Multi-stage) | Sequential decomposition, no thinking control | Worst: 152.9s, reasoning spirals in Stage 3 |
 | 7 | Thinking Budget (LOW) | Monolithic with `thinking_level=LOW` | Fastest at 8.2s, but 6.7% malformed outputs |
 | 8 | Pro Model | `gemini-3.1-pro-preview` | 19x cost, lower reliability than architected Flash |
@@ -125,21 +127,31 @@ In **this monolithic prompt**, `thinking_level=LOW` produced the fastest results
 ## Project Structure
 
 ```
-├── compare_benchmarks.py    # Main orchestrator (120+ runs, report generation)
 ├── prompts.py               # All prompt variants, system messages, schemas
 ├── .env                     # GOOGLE_API_KEY
+├── scripts/
+│   ├── compare_benchmarks.py       # Main orchestrator (live runs, report generation)
+│   ├── salvage.py                  # Rebuild reports from a run log
+│   ├── measure_concurrency_fase2.py# Structural concurrency (mocked provider)
+│   ├── measure_concurrency_real.py # Real concurrent-load benchmark (live API)
+│   └── merge_extended_corpus.py    # One-off merge of the two real datasets
 ├── strategies/
 │   ├── monolithic/          # Baseline + strict-schema variant (run_monolithic_schema)
 │   ├── optimized_monolithic/# Shortened few-shot prompt
 │   ├── lazy_optimized/      # Partial CEFR (A1-B1 only)
-│   ├── cascade/             # ✅ Structured Cascade (production)
-│   ├── pipeline/            # Sequential multi-stage  
+│   ├── cascade/             # Structured Cascade (production pick)
+│   ├── pipeline/            # Sequential multi-stage
 │   ├── thinking_budget/     # thinking_level=LOW cap
 │   ├── pro_model/           # gemini-3.1-pro-preview
-│   ├── providers.py         # Gemini client/provider setup
+│   ├── providers.py         # InferenceProvider protocol + Gemini adapter
 │   ├── stage_assembly.py    # Assembles multi-stage output (assemble_examples)
 │   ├── output_validation.py # JSON + CEFR structure validator
 │   └── utils.py             # Shared: cost rates, metrics, API helpers
+├── benchmarks/              # Deterministic replay harness (no network, no key)
+│   ├── fixtures/            # Versioned fixtures derived from the recorded runs
+│   ├── replay_provider.py   # InferenceProvider that replays recorded latencies
+│   ├── run.py               # p50/p95/p99 + CI95 to results.json; --check = gate
+│   └── results.json         # Versioned replay baseline the nightly gate compares against
 ├── benchmark_results/       # Generated reports, raw JSON, drafts
 └── dashboard/               # Visualization UI
     ├── index.html
@@ -159,14 +171,17 @@ python -m venv venv
 # Then copy .env.template to .env and set GOOGLE_API_KEY.
 
 # 2. Quick smoke test (1 word, 1 iteration)
-./venv/bin/python compare_benchmarks.py --words silta --iterations 1
+./venv/bin/python -m scripts.compare_benchmarks --words silta --iterations 1
 
 # 3. Full benchmark (all 8 strategies, 5 words, 3 iterations = 120 runs;
 #    multi-stage strategies emit several Gemini calls per run, so the real
 #    API-call count is higher)
-./venv/bin/python compare_benchmarks.py \
+./venv/bin/python -m scripts.compare_benchmarks \
   --strategies monolithic monolithic_schema optimized_monolithic lazy_optimized pipeline cascade thinking_budget pro_model \
   --iterations 3
+
+# 3b. Offline replay benchmark (no key, no cost): p50/p95/p99 + regression gate
+./venv/bin/python -m benchmarks.run --check --iterations 15
 
 # 4. View dashboard locally
 ./venv/bin/python -m http.server 8080
@@ -178,48 +193,91 @@ python -m venv venv
 
 ```bash
 # Test specific strategies
-./venv/bin/python compare_benchmarks.py --strategies monolithic cascade --iterations 5
+./venv/bin/python -m scripts.compare_benchmarks --strategies monolithic cascade --iterations 5
 
 # Test specific words
-./venv/bin/python compare_benchmarks.py --words hana kuusi --iterations 3
+./venv/bin/python -m scripts.compare_benchmarks --words hana kuusi --iterations 3
 
 # Adjust timeout (default: 180s)
-./venv/bin/python compare_benchmarks.py --timeout 240
+./venv/bin/python -m scripts.compare_benchmarks --timeout 240
 ```
 
 ---
 
 ## Recommendations for Production
 
-1. **For full dictionary entries (6 CEFR levels + spokenFi):** Use **Structured Cascade** — 17.2s, 100% reliability, $0.002/call.
-2. **For maximum speed with retry tolerance:** `thinking_level=LOW` monolithic — 8.2s, requires ~7% retry rate.
-3. **For partial content (A1-B1 only):** Lazy Optimized — 16.1s, 100% reliable, lowest cost.
+All figures below are from the historical n=120 manual run (pending CI-gated live verification):
+
+1. **For full dictionary entries (6 CEFR levels + spokenFi):** Use **Structured Cascade** (17.2s, 100% reliability, $0.002/call in that run).
+2. **For maximum speed with retry tolerance:** `thinking_level=LOW` monolithic (8.2s, required ~7% retry rate).
+3. **For partial content (A1-B1 only):** Lazy Optimized (16.1s, 100% reliable, lowest cost).
 4. **Avoid:** Pipeline without thinking controls. Pro Model for structured generation tasks.
 
 ---
 
-## CI, provider pluggability, and real load testing
+## CI, replay gate, provider pluggability, and real load testing
 
-### `ci.yml` vs `live-eval.yml`
+### `ci.yml` vs `bench.yml` vs `live-eval.yml`
 
 `ci.yml` (pytest + ruff) is **100% offline/mocked** by design (see its own
-header comment) — it gates every push/PR without needing a secret or spending
-real money. `.github/workflows/live-eval.yml` is the complement: a
+header comment): it gates every push/PR without needing a secret or spending
+real money. The suite includes one test file per strategy
+(`tests/test_strategy_*.py`, 8/8) asserting the common dict contract and
+output validity against the same replay provider the benchmark harness uses.
+
+`.github/workflows/bench.yml` is the **replay benchmark gate**
+(manual-dispatch + nightly): it re-runs all 8 strategies N times against the
+deterministic `ReplayProvider` (versioned fixtures in `benchmarks/fixtures/`,
+derived from the recorded real runs), recomputes p50/p95/p99 + n + CI95, and
+**fails if any strategy's relative p50 latency drifts beyond a defined
+threshold** (default +/-25%) versus the versioned baseline
+(`benchmarks/results.json`). Because latencies are replayed, a drift can only
+mean the orchestration code changed (parallel became sequential, calls were
+added or lost) or the fixture/baseline needs an intentional regeneration. It
+verifies the latency *profile* of the code, not the live API numbers.
+
+`.github/workflows/live-eval.yml` is the live complement: a
 **manual-dispatch + weekly** job that pegs a cheap subset (1 word, 1
 iteration, the lightest strategy) against the **real, paid** Gemini API and
 uploads the result as a workflow artifact, to catch drift a mock can never
 show (real latency, real schema/response shape changes). It does **not** gate
-merges — a transient 429 or a slow week shouldn't block a PR.
+merges: a transient 429 or a slow week shouldn't block a PR.
 
 It requires a `GOOGLE_API_KEY` **repository secret** (Settings → Secrets and
 variables → Actions) — configuring it is a one-time step only the repo owner
 can do (same reasoning as `NPM_TOKEN` in the release pipelines: it's a
 credential tied to a personal account). Without the secret the job fails
 fast with a clear message instead of hanging or dumping a raw traceback —
-verified locally by running `compare_benchmarks.py` with `GOOGLE_API_KEY`/
+verified locally by running `scripts/compare_benchmarks.py` with `GOOGLE_API_KEY`/
 `GEMINI_API_KEY` both absent from the environment: exit code 1, message
 `GOOGLE_API_KEY is not set. Copy .env.template to .env and fill in a real
 key`.
+
+### Replay harness (`benchmarks/`)
+
+```bash
+# Regenerate the fixture from the recorded real datasets (versioned inputs)
+python -m benchmarks.generate_fixture
+
+# Run the replay benchmark and rewrite the baseline (benchmarks/results.json)
+python -m benchmarks.run --iterations 15
+
+# Gate mode: compare a fresh replay run against the versioned baseline
+python -m benchmarks.run --check --iterations 15
+```
+
+The fixture stores the end-to-end durations of every valid recorded run (both
+real datasets in `benchmark_results/`, n=240 combined) plus canned responses;
+the provider replays them at `time_scale` (default 0.05) so a full gated run
+takes a few minutes and zero dollars. The gate compares the *measured*
+relative p50 of a fresh run against the *expected* relative p50 stored in
+`benchmarks/results.json` (computed analytically from the fixture, so it is
+machine-independent), adjusting the expectation by a live-calibrated
+per-sleep event-loop overhead so the check is portable across OS timer
+resolutions. Honest scope note: for cascade/pipeline the per-stage
+split of each recorded duration is a documented convention (the datasets only
+recorded e2e), so the replay preserves real e2e distributions and call
+structure, not per-stage timings.
 
 ### Provider pluggability (`strategies/providers.py`)
 
@@ -239,19 +297,19 @@ against the real Gemini path. What this does **not** cover: a real paid
 second vendor (OpenAI/Anthropic/etc.). That's pending a second API key; once
 available, the remaining work is a concrete adapter class implementing
 `InferenceProvider` for that SDK, injected via `utils.set_provider(...)`
-before a normal `compare_benchmarks.py` run — no strategy code changes.
+before a normal `scripts/compare_benchmarks.py` run, no strategy code changes.
 
-### Real concurrent-load benchmark (`measure_concurrency_real.py`)
+### Real concurrent-load benchmark (`scripts/measure_concurrency_real.py`)
 
-`measure_concurrency_fase2.py` measures **structural** concurrency (in-flight
-call count) against a mocked provider — useful for verifying the Semaphore
-cap, useless for real latency under load. `measure_concurrency_real.py`
-fires N real simultaneous calls (`asyncio.gather`, N configurable via
-`--concurrency`, 10–20 per gif-adn-2) at the live API and reports real
-p50/p95/p99 latency:
+`scripts/measure_concurrency_fase2.py` measures **structural** concurrency
+(in-flight call count) against a mocked provider: useful for verifying the
+Semaphore cap, useless for real latency under load.
+`scripts/measure_concurrency_real.py` fires N real simultaneous calls
+(`asyncio.gather`, N configurable via `--concurrency`, 10-20 per gif-adn-2)
+at the live API and reports real p50/p95/p99 latency:
 
 ```bash
-python measure_concurrency_real.py --concurrency 15
+python -m scripts.measure_concurrency_real --concurrency 15
 ```
 
 It raises `GEMINI_MAX_CONCURRENCY` to match `--concurrency` before running so
