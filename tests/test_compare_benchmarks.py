@@ -11,7 +11,13 @@ import json
 
 import pytest
 
-from compare_benchmarks import _normalize_result, _pick_best_quality_speed, main, summarize_metrics
+from compare_benchmarks import (
+    _normalize_result,
+    _pick_best_quality_speed,
+    confidence_interval_95,
+    main,
+    summarize_metrics,
+)
 
 
 def _valid_payload():
@@ -182,6 +188,43 @@ def test_summarize_metrics_un_solo_run_std_es_cero():
     assert summary["std_duration"] == 0
     assert summary["successful_runs"] == 1
     assert summary["valid_output_rate"] == 1.0
+    # n=1: no hay stdev, el IC no esta definido (no es "cero", es None).
+    assert summary["ci95_duration"] is None
+
+
+def test_summarize_metrics_runs_vacio_ci95_none():
+    assert summarize_metrics([])["ci95_duration"] is None
+
+
+def test_confidence_interval_95_n_menor_a_dos_es_none():
+    assert confidence_interval_95([]) is None
+    assert confidence_interval_95([1.0]) is None
+
+
+def test_confidence_interval_95_valores_identicos_margen_cero():
+    ci = confidence_interval_95([2.0, 2.0, 2.0])
+    assert ci["mean"] == 2.0
+    assert ci["margin"] == 0
+    assert ci["lower"] == ci["upper"] == 2.0
+    assert ci["n"] == 3
+
+
+def test_confidence_interval_95_contiene_la_media_muestral():
+    # Con dispersion real el IC debe ser simetrico alrededor de la media y
+    # angosto a medida que crece n (mismo desvio, mas muestras -> stderr menor).
+    small = confidence_interval_95([1.0, 2.0, 3.0])
+    large = confidence_interval_95([1.0, 2.0, 3.0] * 10)
+    assert small["lower"] < small["mean"] < small["upper"]
+    assert large["margin"] < small["margin"]
+
+
+def test_summarize_metrics_ci95_duration_presente_con_multiples_runs():
+    runs = [_run(duration=d) for d in (1.0, 2.0, 3.0)]
+    summary = summarize_metrics(runs)
+    ci = summary["ci95_duration"]
+    assert ci is not None
+    assert ci["mean"] == 2.0
+    assert ci["lower"] < 2.0 < ci["upper"]
 
 
 def test_summarize_metrics_mix_valido_api_only_y_timeout():

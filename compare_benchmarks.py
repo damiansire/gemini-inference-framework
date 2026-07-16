@@ -161,6 +161,34 @@ STRATEGIES = {
 }
 
 
+# z para 95% two-tailed (1.959964...). Se usa la aproximacion normal en vez de
+# t-Student (gif-1): con n tipico de 3-6 corridas por celda word x strategy el
+# t-critico real es mas ancho (p.ej. t=4.30 con n=3 vs z=1.96) y el intervalo
+# reportado aca SERIA mas angosto de lo correcto para muestras chicas. Se deja
+# documentado en vez de instalar scipy solo por la tabla t: quien lea
+# `ci95_duration` en una celda de pocas corridas debe tratarlo como una cota
+# optimista, no como un IC exacto.
+_Z_95 = 1.959963984540054
+
+
+def confidence_interval_95(values):
+    """IC 95% (aprox. normal) de la media de ``values``. None si n<2."""
+    n = len(values)
+    if n < 2:
+        return None
+    mean = statistics.mean(values)
+    stderr = statistics.stdev(values) / (n**0.5)
+    margin = _Z_95 * stderr
+    return {
+        "mean": mean,
+        "margin": margin,
+        "lower": mean - margin,
+        "upper": mean + margin,
+        "n": n,
+        "method": "normal-approx-95",
+    }
+
+
 def summarize_metrics(runs):
     successful = [run for run in runs if run["success"]]
     api_successful = [run for run in runs if run.get("api_success")]
@@ -175,6 +203,7 @@ def summarize_metrics(runs):
             "min_duration": 0,
             "max_duration": 0,
             "std_duration": 0,
+            "ci95_duration": None,
             "avg_ttft": None,
             "std_ttft": 0,
             "avg_total_tokens": 0,
@@ -203,6 +232,7 @@ def summarize_metrics(runs):
         "min_duration": min(durations),
         "max_duration": max(durations),
         "std_duration": statistics.stdev(durations) if len(durations) > 1 else 0,
+        "ci95_duration": confidence_interval_95(durations),
         "avg_ttft": statistics.mean(valid_ttfts) if valid_ttfts else None,
         "std_ttft": statistics.stdev(valid_ttfts) if len(valid_ttfts) > 1 else 0,
         "avg_total_tokens": statistics.mean(total_tokens),
@@ -329,6 +359,13 @@ def _generate_benchmark_report(data):
         ("Avg Latency (E2E)", "avg_duration", lambda value: f"{value:.2f}s"),
         ("Latency Std Dev", "std_duration", lambda value: f"+/-{value:.2f}s"),
         (
+            "95% CI of Avg Latency",
+            "ci95_duration",
+            lambda value: (
+                "N/A (n<2)" if value is None else f"[{value['lower']:.2f}s, {value['upper']:.2f}s]"
+            ),
+        ),
+        (
             "Time to 1st Token (TTFT)",
             "avg_ttft",
             lambda value: "N/A" if not value else f"{value:.2f}s",
@@ -376,6 +413,12 @@ def _generate_benchmark_report(data):
         "When a report is regenerated from logs, the input/output token split "
         "is not in the log and is approximated by a heuristic in `salvage.py`, "
         "so the cost column there is doubly estimated.",
+        "",
+        "The 95% CI row uses a normal approximation (z=1.96), not a "
+        "t-distribution: with the small per-strategy n typical here (a few "
+        "iterations per word), the true t-critical value is wider, so treat "
+        "this interval as an optimistic lower bound on uncertainty, not an "
+        "exact one. See `confidence_interval_95` in compare_benchmarks.py.",
         "",
         "## Strategy Notes",
         "",

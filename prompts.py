@@ -389,7 +389,22 @@ Return JSON: {"spoken_examples": [{"spokenFi": str|null, "level": "a1"|...}]}"""
 # TEST WORDS — covering different word types for comprehensive benchmarking
 # ============================================================================
 
-TEST_WORDS = ["hana", "kuusi", "juosta", "vanha", "silta"]
+# n=120 (5 palabras x 3 iteraciones x 8 estrategias) fue el corpus original.
+# Se duplico a 10 palabras para llegar a n=240 sin tocar iteraciones/estrategias
+# (gif-1): se agregaron un adverbio y una forma flexionada, tipos de palabra que
+# el corpus original no cubria, ademas de mas sustantivos/verbos/adjetivos.
+TEST_WORDS = [
+    "hana",
+    "kuusi",
+    "juosta",
+    "vanha",
+    "silta",
+    "kirja",
+    "syödä",
+    "iso",
+    "nopeasti",
+    "talossa",
+]
 
 LAZY_SYSTEM_MESSAGE = (
     HEADWORD_POLICY
