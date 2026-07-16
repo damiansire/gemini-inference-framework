@@ -13,9 +13,9 @@ compare_benchmarks.py). Corre gasto real: N llamadas a la estrategia mas
 liviana por defecto (optimized_monolithic), N configurable via --concurrency
 (10-20 por default 15, siguiendo el pedido de gif-adn-2).
 
-Uso:
-    python measure_concurrency_real.py --concurrency 15
-    python measure_concurrency_real.py --concurrency 10 --strategy monolithic_schema
+Uso (desde la raiz del repo):
+    python -m scripts.measure_concurrency_real --concurrency 15
+    python -m scripts.measure_concurrency_real --concurrency 10 --strategy monolithic_schema
 """
 
 import argparse
@@ -29,8 +29,8 @@ from datetime import datetime
 
 from dotenv import load_dotenv
 
-from compare_benchmarks import RESULTS_DIR, STRATEGIES
 from prompts import TEST_WORDS
+from scripts.compare_benchmarks import RESULTS_DIR, STRATEGIES
 
 load_dotenv()
 

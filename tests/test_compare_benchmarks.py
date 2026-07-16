@@ -1,4 +1,4 @@
-"""Tests del cableado que decide que numero se publica (compare_benchmarks.py).
+"""Tests del cableado que decide que numero se publica (scripts/compare_benchmarks.py).
 
 Hasta ahora esta capa (el "quality gate" real: que corrida cuenta como exitosa,
 que estrategia se corona "la mas rapida totalmente valida") no tenia ningun
@@ -11,7 +11,7 @@ import json
 
 import pytest
 
-from compare_benchmarks import (
+from scripts.compare_benchmarks import (
     _normalize_result,
     _pick_best_quality_speed,
     confidence_interval_95,

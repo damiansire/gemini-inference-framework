@@ -28,16 +28,17 @@ dev = [
 Repository = "https://github.com/damiansire/gemini-inference-framework"
 Homepage = "https://github.com/damiansire/gemini-inference-framework"
 
-# El repo es un flat-layout (scripts en la raiz + paquete `strategies`), no un
-# src-layout. La autodeteccion de setuptools falla porque `dashboard/` y
-# `benchmark_results/` son directorios hermanos que NO son codigo Python; por eso
-# se declara explicito que se empaqueta: el paquete `strategies` (con sus
-# subpaquetes) y los modulos de nivel raiz que forman el framework.
+# Layout: `prompts.py` en la raiz (los runners lo importan como modulo
+# top-level) + tres paquetes: `strategies` (el framework), `scripts` (el
+# orquestador y utilidades operativas, se corren con `python -m scripts.X`) y
+# `benchmarks` (harness de replay deterministico). La autodeteccion de
+# setuptools falla porque `dashboard/` y `benchmark_results/` son directorios
+# hermanos que NO son codigo Python; por eso se declara explicito.
 [tool.setuptools]
-py-modules = ["prompts", "compare_benchmarks", "salvage", "measure_concurrency_fase2"]
+py-modules = ["prompts"]
 
 [tool.setuptools.packages.find]
-include = ["strategies*"]
+include = ["strategies*", "scripts*", "benchmarks*"]
 
 [tool.pytest.ini_options]
 # Orden aleatorio fuerza independencia entre tests; los timeouts se arreglan

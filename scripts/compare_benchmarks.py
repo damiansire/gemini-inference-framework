@@ -31,7 +31,10 @@ from strategies.utils import FLASH_MODEL, PRO_MODEL, _create_client, estimate_co
 
 load_dotenv()
 
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+# El script vive en scripts/, pero los resultados siguen en
+# benchmark_results/ en la RAIZ del repo (el dashboard y los reportes
+# versionados apuntan ahi), por eso se sube un nivel.
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESULTS_DIR = os.path.join(ROOT_DIR, "benchmark_results")
 
 
@@ -402,7 +405,7 @@ def _generate_benchmark_report(data):
         "All leaderboard metrics above are calculated only from runs whose "
         "recorded `output_valid` flag is true.",
         "In a live benchmark that flag comes from the output validator; in "
-        "reports regenerated from logs via `salvage.py` it is read back from "
+        "reports regenerated from logs via `scripts/salvage.py` it is read back from "
         "each run's logged flag (the validator is not re-executed).",
         "The validator checks JSON parseability, root shape, required keys, "
         "CEFR level coverage, and a headword policy that rejects obvious "
@@ -411,14 +414,14 @@ def _generate_benchmark_report(data):
         "Cost is an estimate, not a billed figure: it multiplies token counts "
         "by the model's published per-million rates.",
         "When a report is regenerated from logs, the input/output token split "
-        "is not in the log and is approximated by a heuristic in `salvage.py`, "
+        "is not in the log and is approximated by a heuristic in `scripts/salvage.py`, "
         "so the cost column there is doubly estimated.",
         "",
         "The 95% CI row uses a normal approximation (z=1.96), not a "
         "t-distribution: with the small per-strategy n typical here (a few "
         "iterations per word), the true t-critical value is wider, so treat "
         "this interval as an optimistic lower bound on uncertainty, not an "
-        "exact one. See `confidence_interval_95` in compare_benchmarks.py.",
+        "exact one. See `confidence_interval_95` in scripts/compare_benchmarks.py.",
         "",
         "## Strategy Notes",
         "",

@@ -28,7 +28,7 @@ let benchmarkData = null;
 // ── Init ──
 document.addEventListener('DOMContentLoaded', async () => {
     // A live run writes benchmark_data.json; reports recovered from logs via
-    // salvage.py write salvaged_results.json. Try the live snapshot first, then
+    // scripts/salvage.py write salvaged_results.json. Try the live snapshot first, then
     // fall back to the salvaged dataset committed in the repo.
     const DATA_SOURCES = [
         '../benchmark_results/benchmark_data.json',
@@ -62,7 +62,7 @@ function showEmptyState() {
                 <div class="empty-state">
                     <h3>No Current Benchmark Snapshot</h3>
                     <p>This dashboard reads a generated dataset from <code>benchmark_results/benchmark_data.json</code>. None exists in this checkout yet.</p>
-                    <code>./venv/bin/python compare_benchmarks.py --iterations 3</code>
+                    <code>./venv/bin/python -m scripts.compare_benchmarks --iterations 3</code>
                 </div>
             </div>
         `;

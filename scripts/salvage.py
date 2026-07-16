@@ -1,7 +1,7 @@
 import json
 import re
 
-from compare_benchmarks import _generate_benchmark_report
+from scripts.compare_benchmarks import _generate_benchmark_report
 
 
 def salvage():
@@ -122,7 +122,7 @@ def salvage():
         )
 
     # Import summarize_metrics now that it is fixed
-    from compare_benchmarks import STRATEGIES, summarize_metrics
+    from scripts.compare_benchmarks import STRATEGIES, summarize_metrics
 
     for key in results_metadata["metadata"]["strategies"]:
         if strategy_results.get(key):

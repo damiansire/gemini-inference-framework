@@ -9,15 +9,16 @@ API de Gemini (mismos modelos, mismo timeout=180s), en momentos distintos
 corridas reales del mismo metodo es honesto siempre que se documente asi -- lo
 que este script hace en el reporte generado (nota de metodologia explicita).
 
-Uso (una sola vez, despues de que compare_benchmarks.py --output
-benchmark_data_extension.json haya terminado):
-    python merge_extended_corpus.py
+Uso (una sola vez, desde la raiz del repo, despues de que
+`python -m scripts.compare_benchmarks --output benchmark_data_extension.json`
+haya terminado):
+    python -m scripts.merge_extended_corpus
 """
 
 import json
 import os
 
-from compare_benchmarks import (
+from scripts.compare_benchmarks import (
     RESULTS_DIR,
     STRATEGIES,
     _generate_article_draft,

@@ -10,8 +10,8 @@ name: Live eval (real API)
 #
 # Requiere el secret GOOGLE_API_KEY configurado en el repo (Settings > Secrets
 # and variables > Actions). Sin el secret, el job FALLA rapido con un mensaje
-# claro (compare_benchmarks.py hace fail-fast si falta la key, ver
-# `main()` en compare_benchmarks.py) en vez de una corrida colgada o un
+# claro (scripts/compare_benchmarks.py hace fail-fast si falta la key, ver
+# `main()` en ese modulo) en vez de una corrida colgada o un
 # traceback opaco -- verificado localmente (sin GOOGLE_API_KEY/GEMINI_API_KEY
 # en el entorno, exit code 1 con el mensaje de abajo).
 #
@@ -49,7 +49,7 @@ jobs:
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
-          python compare_benchmarks.py \
+          python -m scripts.compare_benchmarks \
             --words hana \
             --iterations 1 \
             --strategies optimized_monolithic \
