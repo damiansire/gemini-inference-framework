@@ -1,0 +1,46 @@
+name: Bench (replay gate)
+
+# Gate de regresion de latencia RELATIVA en modo replay (sin red, sin secrets):
+# re-ejecuta el harness de benchmarks/ contra el ReplayProvider (fixtures
+# versionadas, derivadas de corridas reales) y FALLA si la latencia relativa
+# p50 de cualquier estrategia se desvia del baseline versionado
+# (benchmarks/results.json) mas alla del umbral definido en el harness
+# (+/-25%, --threshold). En replay las latencias estan grabadas: un desvio
+# grande solo puede venir de un cambio en el codigo de orquestacion (p. ej.
+# serializar el gather de cascade, agregar/perder llamadas por run) o de una
+# fixture/baseline desactualizadas que hay que regenerar a proposito con
+# `python -m benchmarks.run`.
+#
+# Complementa, no reemplaza: ci.yml gatea logica (pytest+ruff, mocks);
+# live-eval.yml pega a la API real semanalmente sin gatear. Este job gatea la
+# forma del perfil de latencia sin gastar un centavo.
+on:
+  workflow_dispatch:
+  schedule:
+    # Nightly: barato (todo offline) y suficiente para pescar drift de codigo.
+    - cron: '30 5 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  replay-bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+
+      # Mismas iteraciones que el baseline versionado para que los percentiles
+      # sean comparables (el harness avisa si difieren).
+      - name: Replay benchmark gate
+        run: python -m benchmarks.run --check --iterations 15

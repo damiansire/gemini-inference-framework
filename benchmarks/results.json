@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-16T11:14:20+00:00",
+  "mode": "replay",
+  "fixture_version": 1,
+  "time_scale": 0.05,
+  "iterations": 15,
+  "baseline_strategy": "monolithic",
+  "note": "Percentiles de un replay deterministico de corridas reales grabadas (ver benchmarks/fixtures/). NO son mediciones frescas contra la API viva. El gate (--check) compara la latencia RELATIVA medida contra expected_relative_p50 (analitico, independiente de la maquina); los campos p50/p95/p99_s medidos incluyen el overhead del event loop del runner que genero este archivo.",
+  "strategies": {
+    "monolithic": {
+      "n": 15,
+      "failures": 0,
+      "failure_messages": [],
+      "p50_s": 1.2167317867279053,
+      "p95_s": 1.4627230405807494,
+      "p99_s": 1.5490597295761108,
+      "mean_s": 1.183283011118571,
+      "ci95": {
+        "mean": 1.183283011118571,
+        "margin": 0.10693519183343074,
+        "lower": 1.0763478192851403,
+        "upper": 1.2902182029520017,
+        "n": 15,
+        "method": "normal-approx-95"
+      },
+      "p50_equivalent_real_s": 24.334635734558105,
+      "relative_p50_vs_monolithic": 1.0,
+      "expected_p50_s": 1.1225,
+      "expected_relative_p50": 1.0
+    },
+    "monolithic_schema": {
+      "n": 15,
+      "failures": 0,
+      "failure_messages": [],
+      "p50_s": 1.6134889125823975,
+      "p95_s": 2.006407594680786,
+      "p99_s": 2.063889284133911,
+      "mean_s": 1.5151150862375895,
+      "ci95": {
+        "mean": 1.5151150862375895,
+        "margin": 0.18272201122326337,
+        "lower": 1.332393075014326,
+        "upper": 1.697837097460853,
+        "n": 15,
+        "method": "normal-approx-95"
+      },
+      "p50_equivalent_real_s": 32.26977825164795,
+      "relative_p50_vs_monolithic": 1.3260842941577706,
+      "expected_p50_s": 1.553,
+      "expected_relative_p50": 1.3835189309576836
+    },
+    "optimized_monolithic": {
+      "n": 15,
+      "failures": 0,
+      "failure_messages": [],
+      "p50_s": 1.1481974124908447,
+      "p95_s": 1.712352466583252,
+      "p99_s": 1.7432965660095214,
+      "mean_s": 1.1123855113983154,
+      "ci95": {
+        "mean": 1.1123855113983154,
+        "margin": 0.21516548501827062,
+        "lower": 0.8972200263800448,
+        "upper": 1.3275509964165861,
+        "n": 15,
+        "method": "normal-approx-95"
+      },
+      "p50_equivalent_real_s": 22.963948249816895,
+      "relative_p50_vs_monolithic": 0.9436733921274741,
+      "expected_p50_s": 1.0835000000000001,
+      "expected_relative_p50": 0.9652561247216036
+    },
+    "lazy_optimized": {
+      "n": 15,
+      "failures": 0,
+      "failure_messages": [],
+      "p50_s": 0.7211973667144775,
+      "p95_s": 1.6732857465744018,
+      "p99_s": 1.6933365392684936,
+      "mean_s": 0.8808563550313314,
+      "ci95": {
+        "mean": 0.8808563550313314,
+        "margin": 0.22185958117087348,
+        "lower": 0.658996773860458,
+        "upper": 1.102715936202205,
+        "n": 15,
+        "method": "normal-approx-95"
+      },
+      "p50_equivalent_real_s": 14.42394733428955,
+      "relative_p50_vs_monolithic": 0.5927332338821827,
+      "expected_p50_s": 0.655,
+      "expected_relative_p50": 0.5835189309576837
+    },
+    "thinking_budget": {
+      "n": 15,
+      "failures": 0,
+      "failure_messages": [],
+      "p50_s": 0.47217392921447754,
+      "p95_s": 0.7408917427062988,
+      "p99_s": 0.7593733406066895,
+      "mean_s": 0.4943902810414632,
+      "ci95": {
+        "mean": 0.4943902810414632,
+        "margin": 0.08449024048098515,
+        "lower": 0.4099000405604781,
+        "upper": 0.5788805215224484,
+        "n": 15,
+        "method": "normal-approx-95"
+      },
+      "p50_equivalent_real_s": 9.44347858428955,
+      "relative_p50_vs_monolithic": 0.38806739033609927,
+      "expected_p50_s": 0.414,
+      "expected_relative_p50": 0.36881959910913137
+    },
+    "pro_model": {
+      "n": 15,
+      "failures": 0,
+      "failure_messages": [],
+      "p50_s": 2.7565977573394775,
+      "p95_s": 3.4179767608642573,
+      "p99_s": 3.7160025405883785,
+      "mean_s": 2.5894756158192953,
+      "ci95": {
+        "mean": 2.5894756158192953,
+        "margin": 0.3532235381104061,
+        "lower": 2.2362520777088895,
+        "upper": 2.942699153929701,
+        "n": 15,
+        "method": "normal-approx-95"
+      },
+      "p50_equivalent_real_s": 55.13195514678955,
+      "relative_p50_vs_monolithic": 2.265575525689729,
+      "expected_p50_s": 2.753,
+      "expected_relative_p50": 2.4525612472160354
+    },
+    "cascade": {
+      "n": 15,
+      "failures": 0,
+      "failure_messages": [],
+      "p50_s": 1.1740143299102783,
+      "p95_s": 1.4385416507720943,
+      "p99_s": 1.7252090930938717,
+      "mean_s": 1.1183152675628663,
+      "ci95": {
+        "mean": 1.1183152675628663,
+        "margin": 0.12710781949089178,
+        "lower": 0.9912074480719745,
+        "upper": 1.2454230870537581,
+        "n": 15,
+        "method": "normal-approx-95"
+      },
+      "p50_equivalent_real_s": 23.480286598205566,
+      "relative_p50_vs_monolithic": 0.9648916406363437,
+      "expected_p50_s": 0.8155,
+      "expected_relative_p50": 0.7265033407572383
+    },
+    "pipeline": {
+      "n": 15,
+      "failures": 0,
+      "failure_messages": [],
+      "p50_s": 7.164690971374512,
+      "p95_s": 13.323637580871582,
+      "p99_s": 13.501497192382812,
+      "mean_s": 7.684809144337972,
+      "ci95": {
+        "mean": 7.684809144337972,
+        "margin": 1.9795524868947727,
+        "lower": 5.7052566574432,
+        "upper": 9.664361631232746,
+        "n": 15,
+        "method": "normal-approx-95"
+      },
+      "p50_equivalent_real_s": 143.29381942749023,
+      "relative_p50_vs_monolithic": 5.888471929086483,
+      "expected_p50_s": 6.639,
+      "expected_relative_p50": 5.914476614699332
+    }
+  }
+}
