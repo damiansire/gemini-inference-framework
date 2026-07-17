@@ -17,7 +17,7 @@ Empirical benchmark and mitigation suite for the Gemini "reasoning explosion" on
 
 > **TL;DR:**
 > - **Community-reported value (not reproduced here):** a Finnish dictionary prompt was reported by a third party to make `gemini-3-flash-preview` consume **62k+ thought tokens** over **4 minutes 19 seconds**. Our n=120 benchmark never reproduced an explosion of that magnitude: our Monolithic (No Schema) baseline measured ~2,648 avg / 4,498 max thought tokens at 22.0s.
-> - **Historical result (manual n=120 run, pending CI-gated live verification):** across 120 runs (8 strategies x 5 words x 3 iterations) the Monolithic baseline went from 22.0s to 17.2s with 100% reliability using a **Structured Cascade** architecture (which rewrites the prompts into per-stage system messages rather than reusing the original prompt verbatim). These figures come from a one-off manual run against the live API; no CI job re-measures them yet. What CI does gate today: the selection logic that crowns the winner, the output quality gate, and (via the replay harness in `benchmarks/`) the relative latency profile of the strategy orchestration code.
+> - **Historical result (single manual n=120 run, pending CI-gated live verification):** across 120 runs (8 strategies x 5 words x 3 iterations, n=15 per strategy) the Monolithic baseline's average latency dropped from 22.0s to 17.2s using a **Structured Cascade** architecture (which rewrites the prompts into per-stage system messages rather than reusing the original prompt verbatim). The 95% CIs are wide and overlap ([19.8s, 24.2s] baseline vs [15.0s, 19.4s] Cascade); n=15 is far too small to advertise a reliability *rate*, so this README does not headline one (the run had 0 validation failures, but read the confidence intervals in the table, not a "100%" badge). These figures come from a one-off manual run against the live API; no CI job re-measures them yet. What CI does gate today: the selection logic that crowns the winner, the output quality gate, and (via the replay harness in `benchmarks/`) the relative latency profile of the strategy orchestration code.
 
 ---
 
@@ -38,20 +38,24 @@ The prompt generates structured JSON dictionary entries for Finnish words, requi
 
 ---
 
-## Benchmark Results (historical, manual n=120 run)
+## Benchmark Results — single manual run (n=15 per strategy), not re-verified by CI, high variance
 
-**8 strategies x 5 words x 3 iterations**, with UUID+epoch cache busting, randomized execution order, model warmup, and structural output validation. Every number in this table is a **historical result from a manual n=120 run, pending CI-gated live verification**: treat it as the recorded snapshot the repo ships, not as a continuously re-measured guarantee.
+**8 strategies x 5 words x 3 iterations = 120 runs (n=15 per strategy)**, one manual pass against the live API, with UUID+epoch cache busting, randomized execution order, model warmup, and structural output validation. This is a **single manual run with wide LLM-side variance**, not a continuously re-measured guarantee: read the 95% confidence intervals, not just the point estimates. No CI job re-measures these absolute live-API numbers yet (the live workflow that regenerates this table is gated on an API-cost secret; see below). The table is **generated from the recorded run data**, not hand-typed:
 
-| Strategy | Avg Latency (±std) | Avg Thought Tokens | Max Thought | Avg Cost (USD, est.) | Success Rate | Failure Rate |
-|---|---|---|---|---|---|---|
-| **Thinking Budget (LOW)** | **8.2s** ±2.2s ⚡ | **0** | 0 | $0.0007 | 93.3% | 6.7% |
-| **Lazy Optimized (A1-B1)** | **16.1s** ±8.6s | 2,586 | 6,620 | $0.0014 | 100% | 0% |
-| **Structured Cascade** | **17.2s** ±4.3s ✅ | 3,862 | 10,195 | $0.0023 | **100%** | **0%** |
-| Optimized Monolithic | 20.7s ±8.0s | 2,645 | 5,785 | $0.0015 | 73.3% | 26.7% |
-| Monolithic (No Schema) | 22.0s ±4.4s | 2,648 | 4,498 | $0.0018 | 100% | 0% |
-| Monolithic (Strict Schema) | 28.9s ±7.3s | 4,049 | 6,597 | $0.0024 | 100% | 0% |
-| Pro Model (3.1) | 54.7s ±10.6s | 4,822 | 7,420 | **$0.0340** 💸 | 86.7% | 13.3% |
-| **Pipeline (Multi-stage)** | **152.9s** ±74.0s 🐌 | **10,713** | **18,144** | $0.0049 | 93.3% | 6.7% |
+<!-- BENCHMARK_TABLE:START -->
+| Strategy | n (valid/total) | Avg Latency | 95% CI (latency) | Avg Thought | Max Thought | Avg Cost (USD, est.) | Success Rate | Failure Rate |
+|---|---|---|---|---|---|---|---|---|
+| Thinking Budget (LOW) | 14/15 | 8.2s | [7.1s, 9.3s] | 0 | 0 | $0.0007 | 93.3% | 6.7% |
+| Lazy Optimized (A1-B1) | 15/15 | 16.1s | [11.8s, 20.5s] | 2,586 | 6,620 | $0.0014 | 100.0% | 0.0% |
+| Structured Cascade | 15/15 | 17.2s | [15.0s, 19.4s] | 3,862 | 10,195 | $0.0023 | 100.0% | 0.0% |
+| Optimized Monolithic | 11/15 | 20.7s | [16.0s, 25.4s] | 2,645 | 5,785 | $0.0015 | 73.3% | 26.7% |
+| Monolithic (No Schema) | 15/15 | 22.0s | [19.8s, 24.2s] | 2,648 | 4,498 | $0.0018 | 100.0% | 0.0% |
+| Monolithic (Strict Schema) | 15/15 | 28.9s | [25.2s, 32.6s] | 4,049 | 6,597 | $0.0023 | 100.0% | 0.0% |
+| Pro Model | 13/15 | 54.7s | [48.9s, 60.4s] | 4,822 | 7,420 | $0.0340 | 86.7% | 13.3% |
+| Pipeline (Multi-stage) | 14/15 | 152.9s | [114.1s, 191.7s] | 10,713 | 18,144 | $0.0049 | 93.3% | 6.7% |
+
+_Generated by `scripts/render_readme_table.py` from a recorded benchmark run (5 words x 3 iterations per strategy; 112 valid runs feed the latency stats). The 95% CI is a normal approximation over the valid-run latencies (see `confidence_interval_95`); with this small n it is an optimistic lower bound on uncertainty, and sub-second gaps between adjacent strategies overlap heavily (they are within the margin, not a ranking)._
+<!-- BENCHMARK_TABLE:END -->
 
 > **How this table is verified:** the 22.0s to 17.2s figures come from a **manual n=120 run**, not a CI-gated benchmark. `ci.yml` runs pytest+ruff against a fully offline/mocked provider (deterministic, zero network calls) and does not re-run or assert on live latency numbers. What IS gated automatically today: (1) the logic that decides which strategy is reported as "fastest fully valid" (`tests/test_compare_benchmarks.py`), (2) one test file per strategy asserting contract + output validity (`tests/test_strategy_*.py`), and (3) the **replay benchmark gate** (`benchmarks/` + `.github/workflows/bench.yml`): a nightly job re-runs all 8 strategies against a deterministic replay provider built from the recorded runs and fails if any strategy's relative p50 latency drifts beyond a defined threshold. The replay gate protects the orchestration code and the relative ordering; it does NOT re-verify the absolute live-API numbers, which remain pending live re-verification.
 >
@@ -85,7 +89,7 @@ The **Structured Cascade** decomposes the task into 3 specialized stages with pe
 | Stage 2 | Generate CEFR examples (per meaning) | `LOW` | 0.7 |
 | Stage 3 | SpokenFi transformation (per meaning, after Stage 2) | `MINIMAL` | 0.0 |
 
-**Result (historical n=120 run, pending CI-gated live verification):** 17.2s average with 100% success rate across all 15 runs. Each meaning is processed in parallel via `asyncio.gather`; within a single meaning, Stage 2 runs before Stage 3 because Stage 3 transforms Stage 2's output.
+**Result (single manual n=120 run, pending CI-gated live verification):** 17.2s average latency (95% CI [15.0s, 19.4s], n=15), with 0 validation failures in that run — a promising sign, not a reliability guarantee at n=15. Each meaning is processed in parallel via `asyncio.gather`; within a single meaning, Stage 2 runs before Stage 3 because Stage 3 transforms Stage 2's output.
 
 > **On "parallel":** every mention of "parallel"/"concurrent" in this README refers to
 > **async I/O orchestration** (`asyncio.gather` over concurrent network calls to the
@@ -113,11 +117,11 @@ In **this monolithic prompt**, `thinking_level=LOW` produced the fastest results
 
 | # | Strategy | Description | Key Insight |
 |---|----------|-------------|-------------|
-| 1 | Monolithic (No Schema) | Original prompt — baseline control | 22s avg, 100% reliable |
+| 1 | Monolithic (No Schema) | Original prompt — baseline control | 22.0s avg (95% CI [19.8s, 24.2s]), 0/15 validation failures |
 | 2 | Monolithic (Strict Schema) | API-level `response_schema` enforcement | +31% latency vs baseline due to schema compliance overhead |
 | 3 | Optimized Monolithic | Shorter prompt with Few-Shot patterns | Fast but 26.7% failure rate |
 | 4 | Lazy Optimized (A1-B1) | Only generates 3 CEFR levels instead of 6 | Best cost/performance for partial output |
-| 5 | **Structured Cascade** | Per-stage thinking + parallel execution | **Production pick: 17.2s ±4.3s, 100% success in the historical run (within the margin of the top fully-valid strategies)** |
+| 5 | **Structured Cascade** | Per-stage thinking + parallel execution | **Production pick: 17.2s (95% CI [15.0s, 19.4s]), 0/15 validation failures in the single run — within the margin of the top fully-valid strategies** |
 | 6 | Pipeline (Multi-stage) | Sequential decomposition, no thinking control | Worst: 152.9s, reasoning spirals in Stage 3 |
 | 7 | Thinking Budget (LOW) | Monolithic with `thinking_level=LOW` | Fastest at 8.2s, but 6.7% malformed outputs |
 | 8 | Pro Model | `gemini-3.1-pro-preview` | 19x cost, lower reliability than architected Flash |
@@ -207,18 +211,18 @@ python -m venv venv
 
 ## Recommendations for Production
 
-All figures below are from the historical n=120 manual run (pending CI-gated live verification):
+All figures below are from the single manual n=120 run (n=15 per strategy, pending CI-gated live verification); the parenthetical latencies are point estimates over a small, high-variance sample, not guarantees:
 
-1. **For full dictionary entries (6 CEFR levels + spokenFi):** Use **Structured Cascade** (17.2s, 100% reliability, $0.002/call in that run).
+1. **For full dictionary entries (6 CEFR levels + spokenFi):** Use **Structured Cascade** (17.2s, 95% CI [15.0s, 19.4s], 0/15 validation failures, $0.002/call in that run).
 2. **For maximum speed with retry tolerance:** `thinking_level=LOW` monolithic (8.2s, required ~7% retry rate).
-3. **For partial content (A1-B1 only):** Lazy Optimized (16.1s, 100% reliable, lowest cost).
+3. **For partial content (A1-B1 only):** Lazy Optimized (16.1s, 95% CI [11.8s, 20.5s], 0/15 validation failures, lowest cost).
 4. **Avoid:** Pipeline without thinking controls. Pro Model for structured generation tasks.
 
 ---
 
 ## CI, replay gate, provider pluggability, and real load testing
 
-### `ci.yml` vs `bench.yml` vs `live-eval.yml`
+### `ci.yml` vs `bench.yml` vs `live-eval.yml` vs `regen-readme-table.yml`
 
 `ci.yml` (pytest + ruff) is **100% offline/mocked** by design (see its own
 header comment): it gates every push/PR without needing a secret or spending
@@ -253,6 +257,26 @@ verified locally by running `scripts/compare_benchmarks.py` with `GOOGLE_API_KEY
 `GEMINI_API_KEY` both absent from the environment: exit code 1, message
 `GOOGLE_API_KEY is not set. Copy .env.template to .env and fill in a real
 key`.
+
+`.github/workflows/regen-readme-table.yml` closes the loop on the headline
+table specifically. It is **manual-dispatch + monthly** (it hits the paid API,
+so it does not run per-push) and, gated on the same `GOOGLE_API_KEY` secret,
+**re-measures all 8 strategies with a larger, configurable n**, recomputes the
+means and 95% CIs, regenerates the leaderboard via
+`scripts/render_readme_table.py`, and opens a PR with the refreshed
+`benchmark_results/readme_leaderboard_run.json` + README table. This is why the
+table stops being a frozen unverified number: it is either re-measured and
+updated, or the section header already flags it as a single manual run.
+
+The table itself is a **gated artifact**, not prose: it is generated between the
+`<!-- BENCHMARK_TABLE:START/END -->` markers from the versioned dataset, and
+`tests/test_render_readme_table.py` (part of the offline `ci.yml` suite) fails
+if the committed table drifts from that data. Regenerate locally with:
+
+```bash
+python -m scripts.render_readme_table --write   # rewrite the table in place
+python -m scripts.render_readme_table --check    # gate: fail if out of sync
+```
 
 ### Replay harness (`benchmarks/`)
 

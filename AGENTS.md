@@ -118,19 +118,29 @@ corpus de `/fragua`, `~/.claude/tools/_audit-tools/refs/architecture/`):
 - **Validacion adversarial, no solo happy path** (ya cubierto arriba en
   "Reglas duras" y "Definition of done" — es el mismo principio que el item g
   del corpus: el estado queda consistente o el error es explicito, nunca a medias).
-- **README con prueba real, no solo claim** (item l), estado 2026-07-16:
-  el claim ya no se afirma como verificado. El README etiqueta la metrica
-  22.0s->17.2s como "resultado historico de una corrida manual n=120,
-  pendiente de verificacion CI-gated contra la API viva", y lo que SI queda
-  gateado ejecutablemente es: (a) la logica de seleccion del ganador
+- **README con prueba real, no solo claim** (item l), estado 2026-07-17:
+  el claim ya no se afirma como verificado. El encabezado de la seccion avisa
+  explicito ("single manual run (n=15 per strategy), not re-verified by CI,
+  high variance") y ningun "100% reliability" encabeza el repo (las celdas de
+  la tabla muestran el dato con su n e IC95 al lado, no como badge). La tabla
+  del README NO se tipea a mano: se genera con `scripts/render_readme_table.py`
+  desde un dataset versionado (`benchmark_results/readme_leaderboard_run.json`)
+  entre los markers `<!-- BENCHMARK_TABLE:START/END -->`, con columnas de `n
+  (valid/total)` e `95% CI (latency)` por estrategia. Lo que queda gateado
+  ejecutablemente es: (a) la logica de seleccion del ganador
   (`tests/test_compare_benchmarks.py`), (b) contrato + validez de salida por
-  estrategia (`tests/test_strategy_*.py`, 8/8), y (c) el perfil de latencia
+  estrategia (`tests/test_strategy_*.py`, 8/8), (c) el perfil de latencia
   RELATIVO del codigo de orquestacion via el harness de replay
   (`benchmarks/` + `bench.yml` nightly, falla si el p50 relativo se corre
-  mas de +/-25% del esperado versionado). Lo que sigue SIN gate: los numeros
-  absolutos contra la API viva (live-eval.yml los muestrea semanal pero no
-  gatea). NO volver a subir el claim a "verificado" hasta que exista esa
-  verificacion live gateada.
+  mas de +/-25% del esperado versionado), y (d) que la tabla del README este en
+  sync con su dataset fuente (`tests/test_render_readme_table.py`; regenerar con
+  `python -m scripts.render_readme_table --write`). Lo que sigue SIN gate
+  automatico: los numeros absolutos contra la API viva. Para cerrarlo cuando el
+  costo de API lo permita esta `regen-readme-table.yml` (manual/mensual, gateado
+  en el secret `GOOGLE_API_KEY`): re-mide con n mas grande, recomputa IC95 y abre
+  un PR con la tabla regenerada. live-eval.yml sigue muestreando semanal sin
+  gatear. NO volver a subir el claim a "verificado" hasta que esa re-medicion
+  live corra de verdad.
 
 Gap de corpus conocido: `/fragua` todavia no tiene una nota `refs/python/`
 (el enum de stacks cubre angular/react/rust/tauri/discord/creative/genai/

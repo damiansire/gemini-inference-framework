@@ -1,0 +1,96 @@
+name: Regenerate README leaderboard (live re-measure)
+
+# Cierra el hueco del roast: la tabla destacada del README salia de UNA corrida
+# manual n=15 por estrategia que nada re-medía. Este job re-mide contra la API
+# REAL de Gemini con un n mas grande, recomputa medias + IC95 y regenera la
+# tabla del README (via scripts/render_readme_table.py) abriendo un PR con el
+# dataset fresco (benchmark_results/readme_leaderboard_run.json) y el README ya
+# renderizado. Asi la cifra deja de ser un claim congelado: o se re-mide y se
+# actualiza, o el encabezado del README ya avisa que es una corrida unica.
+#
+# NO gatea merges y es manual/mensual A PROPOSITO: pega a la API paga (cuesta
+# plata y cuota), asi que corre bajo demanda o una vez al mes, no en cada push.
+# Requiere el secret GOOGLE_API_KEY (Settings > Secrets and variables > Actions),
+# credencial de la cuenta de Damian; sin el, compare_benchmarks hace fail-fast
+# con mensaje claro (ver live-eval.yml).
+#
+# Dos pasos son responsabilidad UNICA de Damian, no de un agente ni de este job:
+#   1. cargar el secret GOOGLE_API_KEY.
+#   2. habilitar "Allow GitHub Actions to create and approve pull requests"
+#      (Settings > Actions > General). Sin eso, el paso de abrir el PR falla.
+on:
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: >-
+          Iteraciones por palabra y estrategia. n por estrategia = 5 palabras x
+          iteraciones. Subir para un n mas grande (mas robusto, mas caro).
+        required: false
+        default: '5'
+  schedule:
+    # Mensual (dia 1, 04:00 UTC): re-medicion periodica sin quemar cuota a diario.
+    - cron: '0 4 1 * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  regen-leaderboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev] -c requirements.lock
+
+      # Re-medicion real: escribe el dataset canonico que alimenta la tabla del
+      # README (benchmark_results/readme_leaderboard_run.json). Un n mas grande
+      # que la corrida historica de 15 estrecha los IC95.
+      - name: Re-measure against real Gemini API
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          python -m scripts.compare_benchmarks \
+            --words hana kuusi juosta vanha silta \
+            --iterations "${{ github.event.inputs.iterations || '5' }}" \
+            --strategies monolithic monolithic_schema optimized_monolithic lazy_optimized pipeline cascade thinking_budget pro_model \
+            --output readme_leaderboard_run.json
+
+      # Regenera la tabla (con n e IC95) desde el dataset fresco.
+      - name: Render README leaderboard
+        run: python -m scripts.render_readme_table --write
+
+      # Verifica que quedo en sync (defensa en profundidad: el render y el check
+      # comparten codigo, pero un fallo aca grita en vez de abrir un PR roto).
+      - name: Verify README table is in sync
+        run: python -m scripts.render_readme_table --check
+
+      - name: Open pull request with the refreshed table
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- README.md benchmark_results/readme_leaderboard_run.json; then
+            echo "No cambios: la tabla ya refleja la ultima corrida."
+            exit 0
+          fi
+          BRANCH="chore/regen-readme-leaderboard-${{ github.run_id }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add README.md benchmark_results/readme_leaderboard_run.json
+          git commit -m "chore(bench): re-medir leaderboard live y regenerar tabla del README"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "chore(bench): regenerar tabla del README (re-medicion live)" \
+            --body "Re-medicion contra la API real de Gemini. Tabla del README regenerada por \`scripts/render_readme_table.py\` con n e IC95 frescos. Revisar los numeros antes de mergear." \
+            --base main \
+            --head "$BRANCH"
