@@ -35,11 +35,13 @@ jobs:
 
       # Instala el proyecto + herramientas de dev (pytest, ruff) declaradas en el
       # extra `dev` de pyproject.toml. Editable para que la suite importe el
-      # paquete instalado.
+      # paquete instalado. El `-c requirements.lock` pinnea TODO el arbol de deps
+      # a versiones exactas: sin eso, "reproducible" dependia de lo que resolviera
+      # pip ese dia (google-genai>=1.0 flotante). Regeneracion: ver el header del lock.
       - name: Install project
         run: |
           python -m pip install --upgrade pip
-          pip install -e .[dev]
+          pip install -e .[dev] -c requirements.lock
 
       # Lint + format ya estaban configurados en pyproject (ruff con B/C4/E/F/S/
       # I/SIM/UP/W + flake8-bandit por las API keys). Se gatean; no se inventa un

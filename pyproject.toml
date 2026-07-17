@@ -16,11 +16,14 @@ dependencies = [
     "python-dotenv>=1.0",
 ]
 
-# Herramientas de desarrollo/CI: pytest para la suite, ruff para lint+format.
-# Se instalan con `pip install -e .[dev]` (lo que corre el gate de CI).
+# Herramientas de desarrollo/CI: pytest para la suite, ruff para lint+format,
+# pytest-randomly para el orden aleatorio de tests. Se instalan con
+# `pip install -e .[dev] -c requirements.lock` (lo que corre el gate de CI;
+# el lockfile pinnea las versiones exactas para que el entorno sea reproducible).
 [project.optional-dependencies]
 dev = [
     "pytest>=8",
+    "pytest-randomly>=4",
     "ruff>=0.15",
 ]
 
@@ -41,8 +44,10 @@ py-modules = ["prompts"]
 include = ["strategies*", "scripts*", "benchmarks*"]
 
 [tool.pytest.ini_options]
-# Orden aleatorio fuerza independencia entre tests; los timeouts se arreglan
-# arreglando el test lento, nunca subiendo el limite.
+# Orden aleatorio (pytest-randomly, en el extra dev) fuerza independencia entre
+# tests: el plugin baraja el orden con un seed que imprime en el header y que
+# se reproduce con --randomly-seed=N. Los timeouts se arreglan arreglando el
+# test lento, nunca subiendo el limite.
 testpaths = ["tests"]
 addopts = "-ra"
 

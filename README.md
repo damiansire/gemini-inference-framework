@@ -164,9 +164,10 @@ In **this monolithic prompt**, `thinking_level=LOW` produced the fastest results
 ## Quick Start
 
 ```bash
-# 1. Create the virtualenv and install dependencies (from pyproject.toml)
+# 1. Create the virtualenv and install dependencies (pyproject.toml declares
+#    the ranges; requirements.lock pins the exact versions CI runs with)
 python -m venv venv
-./venv/bin/pip install -e .
+./venv/bin/pip install -e . -c requirements.lock
 
 # Then copy .env.template to .env and set GOOGLE_API_KEY.
 
