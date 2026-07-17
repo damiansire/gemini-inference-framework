@@ -5,10 +5,9 @@ from prompts import SYSTEM_MESSAGE, get_user_message
 from ..utils import (
     EXPECTED_INFERENCE_ERRORS,
     FLASH_MODEL,
-    _extract_usage,
-    estimate_cost,
     generate_content_stream,
     inference_failure_result,
+    success_result_from_payload,
 )
 
 
@@ -31,20 +30,6 @@ async def run_thinking_budget(word, salt=None, thinking_level="LOW", timeout=120
             config=config,
             timeout=timeout,
         )
-        pt, ct, thought, tt = _extract_usage(response["usage"])
-
-        return {
-            "success": True,
-            "duration": response["duration"],
-            "ttft": response["ttft"],
-            "prompt_tokens": pt,
-            "candidate_tokens": ct,
-            "thought_tokens": thought,
-            "total_tokens": tt,
-            "cost": estimate_cost(pt, ct + thought),
-            "timed_out": False,
-            "text_output": response["text"],
-            "thinking_level": thinking_level,
-        }
     except EXPECTED_INFERENCE_ERRORS as e:
         return inference_failure_result(e, thinking_level=thinking_level)
+    return success_result_from_payload(response, thinking_level=thinking_level)

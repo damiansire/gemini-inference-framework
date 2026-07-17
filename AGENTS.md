@@ -49,6 +49,12 @@ hace `result.get(...)` sobre ese dict (`scripts/compare_benchmarks.py`).
   que se valida), `duration`, `ttft`, `prompt_tokens`, `candidate_tokens`,
   `thought_tokens`, `total_tokens`, `cost`, `timed_out`; en error, `error` (str)
   con `success=False`.
+- La FORMA del dict vive en codigo, no solo en esta prosa: los helpers
+  `inference_success_result` / `success_result_from_payload` /
+  `inference_failure_result` (`strategies/utils.py`) son el UNICO lugar donde
+  se arma. Agregar un campo al contrato = tocar esos helpers + este archivo;
+  `tests/test_result_contract.py` fija la forma y la simetria exito/fallo.
+  No armar el dict a mano en un runner nuevo.
 - `text_output` debe pasar `validate_dictionary_output(...)` con los
   `expected_levels` declarados para esa strategy en `STRATEGIES`.
 

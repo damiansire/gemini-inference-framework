@@ -5,10 +5,9 @@ from prompts import SYSTEM_MESSAGE, get_user_message
 from ..utils import (
     EXPECTED_INFERENCE_ERRORS,
     PRO_MODEL,
-    _extract_usage,
-    estimate_cost,
     generate_content_stream,
     inference_failure_result,
+    success_result_from_payload,
 )
 
 
@@ -30,19 +29,6 @@ async def run_pro_model(word, salt=None, timeout=180):
             config=config,
             timeout=timeout,
         )
-        pt, ct, thought, tt = _extract_usage(response["usage"])
-
-        return {
-            "success": True,
-            "duration": response["duration"],
-            "ttft": response["ttft"],
-            "prompt_tokens": pt,
-            "candidate_tokens": ct,
-            "thought_tokens": thought,
-            "total_tokens": tt,
-            "cost": estimate_cost(pt, ct + thought, PRO_MODEL),
-            "timed_out": False,
-            "text_output": response["text"],
-        }
     except EXPECTED_INFERENCE_ERRORS as e:
         return inference_failure_result(e)
+    return success_result_from_payload(response, model=PRO_MODEL)

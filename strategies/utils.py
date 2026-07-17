@@ -179,6 +179,60 @@ def inference_failure_result(exc, **extra):
     }
 
 
+def inference_success_result(
+    *,
+    duration,
+    ttft,
+    prompt_tokens,
+    candidate_tokens,
+    thought_tokens,
+    total_tokens,
+    cost,
+    text_output,
+    **extra,
+):
+    """Dict plano de EXITO del contrato comun (AGENTS.md).
+
+    Contraparte de ``inference_failure_result``: entre los dos son el UNICO
+    lugar donde se arma la forma del contrato. Agregar un campo al contrato =
+    tocar estos dos helpers (y AGENTS.md), no N runners.
+    """
+    return {
+        "success": True,
+        "duration": duration,
+        "ttft": ttft,
+        "prompt_tokens": prompt_tokens,
+        "candidate_tokens": candidate_tokens,
+        "thought_tokens": thought_tokens,
+        "total_tokens": total_tokens,
+        "cost": cost,
+        "timed_out": False,
+        "text_output": text_output,
+        **extra,
+    }
+
+
+def success_result_from_payload(payload, model=FLASH_MODEL, text_output=None, **extra):
+    """Contrato de exito desde el payload normalizado de ``generate_content_sync``/``_stream``.
+
+    Convenience de los leaf runners. ``text_output`` permite override cuando la
+    salida usable no es ``payload["text"]`` (p. ej. ``payload["parsed"]`` con
+    response_schema); si el override es ``None`` se cae a ``payload["text"]``.
+    """
+    pt, ct, thought, tt = _extract_usage(payload["usage"])
+    return inference_success_result(
+        duration=payload["duration"],
+        ttft=payload["ttft"],
+        prompt_tokens=pt,
+        candidate_tokens=ct,
+        thought_tokens=thought,
+        total_tokens=tt,
+        cost=estimate_cost(pt, ct + thought, model),
+        text_output=payload["text"] if text_output is None else text_output,
+        **extra,
+    )
+
+
 def _create_client():
     """Cliente Gemini sincrono (solo para el warmup one-shot del orquestador)."""
     api_key = os.environ.get("GOOGLE_API_KEY")
