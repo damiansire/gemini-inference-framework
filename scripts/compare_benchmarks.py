@@ -27,7 +27,15 @@ from strategies.output_validation import FULL_LEVELS, LAZY_LEVELS, validate_dict
 from strategies.pipeline.runner import run_pipeline as run_pipeline_strategy_base
 from strategies.pro_model.runner import run_pro_model
 from strategies.thinking_budget.runner import run_thinking_budget
-from strategies.utils import FLASH_MODEL, PRO_MODEL, _create_client, estimate_cost
+from strategies.utils import (
+    EXPECTED_INFERENCE_ERRORS,
+    FLASH_MODEL,
+    PRO_MODEL,
+    _create_client,
+    estimate_cost,
+    inference_failure_result,
+    inference_success_result,
+)
 
 load_dotenv()
 
@@ -38,76 +46,50 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESULTS_DIR = os.path.join(ROOT_DIR, "benchmark_results")
 
 
+def _multistage_success_result(entry, metrics):
+    """Contrato de exito desde el summary del ``MetricsTracker`` de las bases.
+
+    ``run_cascade``/``run_pipeline`` devuelven ``(entry, metrics)``, no el dict
+    plano: este adaptador es el unico puente entre ese summary y el contrato
+    comun (``inference_success_result``).
+    """
+    return inference_success_result(
+        duration=metrics.get("e2e_duration", 0),
+        ttft=metrics.get("ttft", 0),
+        prompt_tokens=metrics["prompt_tokens"],
+        candidate_tokens=metrics["candidate_tokens"],
+        thought_tokens=metrics["thought_tokens_est"],
+        total_tokens=metrics["total_tokens"],
+        cost=estimate_cost(
+            metrics["prompt_tokens"],
+            metrics["candidate_tokens"] + metrics["thought_tokens_est"],
+            FLASH_MODEL,
+        ),
+        text_output=entry,
+    )
+
+
 async def run_pipeline_strategy(word, salt=None, timeout=180):
     """Sequential multi-stage baseline."""
+    # Solo los errores ESPERADOS de inferencia cuentan como fallo de la
+    # estrategia (doctrina EXPECTED_INFERENCE_ERRORS, strategies/utils.py): un
+    # KeyError/TypeError por bug de programacion PROPAGA al orquestador en vez
+    # de contaminar la tasa de exito del benchmark.
     try:
-        result, metrics = await run_pipeline_strategy_base(word, salt=salt, timeout=timeout)
-        duration = metrics.get("e2e_duration", 0)
-        return {
-            "success": True,
-            "duration": duration,
-            "ttft": metrics.get("ttft", 0),
-            "prompt_tokens": metrics["prompt_tokens"],
-            "candidate_tokens": metrics["candidate_tokens"],
-            "thought_tokens": metrics["thought_tokens_est"],
-            "total_tokens": metrics["total_tokens"],
-            "cost": estimate_cost(
-                metrics["prompt_tokens"],
-                metrics["candidate_tokens"] + metrics["thought_tokens_est"],
-                FLASH_MODEL,
-            ),
-            "timed_out": False,
-            "text_output": result,
-        }
-    except Exception as exc:
-        return {
-            "success": False,
-            "duration": 0,
-            "ttft": 0,
-            "prompt_tokens": 0,
-            "candidate_tokens": 0,
-            "thought_tokens": 0,
-            "total_tokens": 0,
-            "cost": 0,
-            "timed_out": isinstance(exc, asyncio.TimeoutError),
-            "error": str(exc) or type(exc).__name__,
-        }
+        entry, metrics = await run_pipeline_strategy_base(word, salt=salt, timeout=timeout)
+    except EXPECTED_INFERENCE_ERRORS as exc:
+        return inference_failure_result(exc)
+    return _multistage_success_result(entry, metrics)
 
 
 async def run_cascade_strategy(word, salt=None, timeout=180):
     """Structured cascade with explicit thinking controls."""
+    # Mismo boundary de errores que run_pipeline_strategy (ver comment ahi).
     try:
-        result, metrics = await run_cascade_strategy_base(word, salt=salt, timeout=timeout)
-        duration = metrics.get("e2e_duration", 0)
-        return {
-            "success": True,
-            "duration": duration,
-            "ttft": metrics.get("ttft", 0),
-            "prompt_tokens": metrics["prompt_tokens"],
-            "candidate_tokens": metrics["candidate_tokens"],
-            "thought_tokens": metrics["thought_tokens_est"],
-            "total_tokens": metrics["total_tokens"],
-            "cost": estimate_cost(
-                metrics["prompt_tokens"],
-                metrics["candidate_tokens"] + metrics["thought_tokens_est"],
-                FLASH_MODEL,
-            ),
-            "timed_out": False,
-            "text_output": result,
-        }
-    except Exception as exc:
-        return {
-            "success": False,
-            "duration": 0,
-            "ttft": 0,
-            "prompt_tokens": 0,
-            "candidate_tokens": 0,
-            "thought_tokens": 0,
-            "total_tokens": 0,
-            "cost": 0,
-            "timed_out": isinstance(exc, asyncio.TimeoutError),
-            "error": str(exc) or type(exc).__name__,
-        }
+        entry, metrics = await run_cascade_strategy_base(word, salt=salt, timeout=timeout)
+    except EXPECTED_INFERENCE_ERRORS as exc:
+        return inference_failure_result(exc)
+    return _multistage_success_result(entry, metrics)
 
 
 STRATEGIES = {
@@ -659,6 +641,10 @@ async def main():
         },
         "raw_runs": [],
         "summaries": {},
+        # Bugs de programacion/config detectados durante la corrida: NO son
+        # fallos de estrategia y NO entran en summaries (ver doctrina
+        # EXPECTED_INFERENCE_ERRORS en strategies/utils.py).
+        "unexpected_errors": [],
     }
 
     strategy_results = {key: [] for key in args.strategies}
@@ -682,20 +668,28 @@ async def main():
 
         try:
             raw_result = await strategy["runner"](word, salt=salt, timeout=args.timeout)
+        except EXPECTED_INFERENCE_ERRORS as exc:
+            # Defensa en profundidad: los runners ya tragan estos errores, pero
+            # si uno se escapa sigue contando como fallo de inferencia normal.
+            raw_result = inference_failure_result(exc)
         except Exception as exc:
+            # Bug de programacion/config: la doctrina EXPECTED_INFERENCE_ERRORS
+            # (strategies/utils.py) manda loguearlo con traceback y NO contarlo
+            # como fallo de la estrategia — un falso negativo silencioso es el
+            # peor bug en un evaluador. Se registra aparte y la corrida termina
+            # con exit code 1 para que el bug no pase inadvertido.
             traceback.print_exc()
-            raw_result = {
-                "success": False,
-                "duration": 0,
-                "ttft": 0,
-                "prompt_tokens": 0,
-                "candidate_tokens": 0,
-                "thought_tokens": 0,
-                "total_tokens": 0,
-                "cost": 0,
-                "timed_out": False,
-                "error": str(exc),
-            }
+            all_results["unexpected_errors"].append(
+                {
+                    "strategy": strategy_key,
+                    "word": word,
+                    "iteration": iteration,
+                    "salt": salt,
+                    "error": f"{type(exc).__name__}: {exc}",
+                    "traceback": traceback.format_exc(),
+                }
+            )
+            continue
 
         result = _normalize_result(strategy_key, raw_result)
         status = (
@@ -748,6 +742,14 @@ async def main():
     _generate_article_draft(all_results)
 
     print(f"\nResults saved to: {output_path}")
+
+    if all_results["unexpected_errors"]:
+        print(
+            f"\nWARNING: {len(all_results['unexpected_errors'])} run(s) crashed with "
+            "unexpected (non-inference) errors and were EXCLUDED from the summaries. "
+            "See 'unexpected_errors' in the results JSON and the tracebacks above."
+        )
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

@@ -252,3 +252,53 @@ def test_main_aborta_de_una_si_falta_google_api_key(monkeypatch, capsys):
         asyncio.run(main())
     assert exc_info.value.code == 1
     assert "GOOGLE_API_KEY" in capsys.readouterr().out
+
+
+# --- main(): un bug de programacion NO contamina la tasa de exito -------------
+
+
+def test_main_excluye_bugs_de_programacion_de_las_tasas(monkeypatch, tmp_path):
+    """Doctrina EXPECTED_INFERENCE_ERRORS (strategies/utils.py): un KeyError de
+    un runner se loguea con traceback y va a ``unexpected_errors``, no a la
+    tasa de exito de la estrategia; la corrida termina con exit code 1."""
+    import scripts.compare_benchmarks as cb
+
+    monkeypatch.setenv("GOOGLE_API_KEY", "clave-fake-solo-para-el-preflight")
+    monkeypatch.setattr(cb, "RESULTS_DIR", str(tmp_path))
+
+    async def warmup_sin_red():
+        return None
+
+    monkeypatch.setattr(cb, "warmup", warmup_sin_red)
+
+    async def runner_con_bug(word, salt=None, timeout=0):
+        raise KeyError("thought_tokens_est")
+
+    monkeypatch.setitem(cb.STRATEGIES["monolithic"], "runner", runner_con_bug)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "compare_benchmarks.py",
+            "--words",
+            "hana",
+            "--iterations",
+            "1",
+            "--strategies",
+            "monolithic",
+            "--output",
+            "out.json",
+        ],
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        asyncio.run(cb.main())
+    assert exc_info.value.code == 1
+
+    data = json.loads((tmp_path / "out.json").read_text(encoding="utf-8"))
+    # El bug NO cuenta como corrida de la estrategia (ni exito ni fallo)...
+    assert data["summaries"]["monolithic"]["total_runs"] == 0
+    assert data["raw_runs"] == []
+    # ...y queda registrado aparte, con el error identificable.
+    assert len(data["unexpected_errors"]) == 1
+    assert "KeyError" in data["unexpected_errors"][0]["error"]
+    assert data["unexpected_errors"][0]["strategy"] == "monolithic"

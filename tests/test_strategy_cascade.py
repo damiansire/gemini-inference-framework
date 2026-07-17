@@ -8,6 +8,7 @@ que promete el contrato comun de dict plano; la base ``run_cascade`` devuelve
 
 import asyncio
 
+import pytest
 from google.genai import errors as genai_errors
 
 from scripts.compare_benchmarks import run_cascade_strategy
@@ -39,3 +40,12 @@ def test_timeout_se_marca_timed_out(provider_sandbox):
     result = asyncio.run(run_cascade_strategy("hana", timeout=5))
     assert result["success"] is False
     assert result["timed_out"] is True
+
+
+def test_bug_de_programacion_propaga_no_se_aplana(provider_sandbox):
+    """Un error INESPERADO (bug de config/programacion) NO cuenta como fallo de
+    la estrategia: propaga, igual que en los leaf runners (doctrina
+    EXPECTED_INFERENCE_ERRORS en strategies/utils.py)."""
+    provider_sandbox(FailingProvider(KeyError("GOOGLE_API_KEY")))
+    with pytest.raises(KeyError):
+        asyncio.run(run_cascade_strategy("hana", timeout=5))
