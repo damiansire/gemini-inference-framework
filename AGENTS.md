@@ -100,25 +100,23 @@ hace `result.get(...)` sobre ese dict (`scripts/compare_benchmarks.py`).
 - No commitear a `main` sin permiso, no `--force` sin permiso.
 - Conventional commits en espanol. Sin atribucion a Claude ni `Co-Authored-By`.
 
-## Estandar nivel mundial
+## Barra de calidad
 
-Todo codigo nuevo se escribe contra esta barra (piso `fellow-standard.md` del
-corpus de `/fragua`, `~/.claude/tools/_audit-tools/refs/architecture/`):
+Todo codigo nuevo se escribe contra esta barra:
 
-- **Nombres por dominio, no por mecanismo** (item a): `run_<strategy>`,
+- **Nombres por dominio, no por mecanismo**: `run_<strategy>`,
   `validate_dictionary_output`, no `handle`/`process`/`data`.
-- **Comentarios explican el PORQUE, nunca el QUE** (item b) — ver los comentarios
-  existentes en `ci.yml`/`pyproject.toml` como ejemplo (explican una decision no
-  obvia, no parafrasean el codigo de al lado).
-- **Contrato comun explicito y auto-documentado** (item c): toda strategy
-  registrada devuelve el mismo dict plano; no romper esa forma sin actualizar
-  este archivo.
-- **Fail-fast con limites explicitos** (item i): toda llamada a Gemini pasa por
-  un timeout; ningun retry/polling sin tope.
+- **Comentarios explican el PORQUE, nunca el QUE**: los comentarios existentes
+  en `ci.yml`/`pyproject.toml` son el ejemplo (explican una decision no obvia,
+  no parafrasean el codigo de al lado).
+- **Contrato comun explicito y auto-documentado**: toda strategy registrada
+  devuelve el mismo dict plano; no romper esa forma sin actualizar este archivo.
+- **Fail-fast con limites explicitos**: toda llamada a Gemini pasa por un
+  timeout; ningun retry/polling sin tope.
 - **Validacion adversarial, no solo happy path** (ya cubierto arriba en
-  "Reglas duras" y "Definition of done" — es el mismo principio que el item g
-  del corpus: el estado queda consistente o el error es explicito, nunca a medias).
-- **README con prueba real, no solo claim** (item l), estado 2026-07-17:
+  "Reglas duras" y "Definition of done"): el estado queda consistente o el
+  error es explicito, nunca a medias.
+- **README con prueba real, no solo claim**, estado 2026-07-17:
   el claim ya no se afirma como verificado. El encabezado de la seccion avisa
   explicito ("single manual run (n=15 per strategy), not re-verified by CI,
   high variance") y ningun "100% reliability" encabeza el repo (las celdas de
@@ -142,9 +140,5 @@ corpus de `/fragua`, `~/.claude/tools/_audit-tools/refs/architecture/`):
   gatear. NO volver a subir el claim a "verificado" hasta que esa re-medicion
   live corra de verdad.
 
-Gap de corpus conocido: `/fragua` todavia no tiene una nota `refs/python/`
-(el enum de stacks cubre angular/react/rust/tauri/discord/creative/genai/
-node-apis/text-rendering/ts-lib/node-ts, pero no python). Las reglas de arriba
-salen del piso transversal (`fellow-standard.md`, no depende de stack); las
-reglas python-especificas (ruff config, pytest patterns, packaging) siguen
-siendo criterio ad-hoc hasta que alguien corra `/fragua evolucionar python`.
+Las convenciones especificas de Python (config de ruff, patrones de pytest,
+empaquetado) viven en `pyproject.toml` y `ci.yml`; esos archivos mandan.
